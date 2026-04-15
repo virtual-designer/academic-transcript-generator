@@ -10,8 +10,25 @@
 #include <unistd.h>
 
 #define PROMPT ">>> "
+#define MAX_COURSES 100
+#define COURSE_NAME_MAX 128
 
-static const int COURSE_NAME_MAX = 128;
+struct semester_record
+{
+    int courses[MAX_COURSES];
+    int course_marks[MAX_COURSES];
+    int course_count;
+    int semester;
+    double wgp;
+    int credits;
+    double tgpa;
+};
+
+struct semester_records
+{
+    struct semester_record **list;
+    int count;
+};
 
 static const char *course_codes[] = {
     "CSE115", "CSE115L", "CSE173", "CSE215", "CSE215L", "CSE225", "CSE225L",
@@ -39,7 +56,6 @@ static const char *course_names[] = {
 };
 
 static const int course_count = 13;
-static const int MAX_COURSES = 100;
 
 static double calc_gp(int marks)
 {
@@ -130,8 +146,12 @@ static char *get_semester_string(int semester)
 
 static void set_semester(int *semester)
 {
-    printf(PROMPT "Enter semester number (e.g. 261): ");
+    printf(PROMPT "Enter semester number (e.g. 261; 0 to end): ");
     scanf("%d", semester);
+
+    if (*semester == 0)
+        return;
+
     char *semester_string = get_semester_string(*semester);
 
     if (!semester_string)
@@ -168,7 +188,7 @@ static void add_courses_interactive(int *added_courses, int *added_course_marks,
     printf(" please enter the appropriate course IDs");
     printf(" indicated inside square brackets '[]').\n");
     printf(
-        "**Enter 0 to stop adding courses and finalize the transcript.**\n\n");
+        "**Enter 0 to stop adding courses and finalize the semester record.**\n\n");
 
     print_course_list();
 
@@ -219,12 +239,11 @@ static void add_courses_interactive(int *added_courses, int *added_course_marks,
     }
 }
 
-void print_transcript(const char *name, int semester, int *added_courses,
-                      int *added_course_marks, int added_course_count)
+void print_semester_table(int semester, int *added_courses,
+                          int *added_course_marks, int added_course_count)
 {
     char *semester_string = get_semester_string(semester);
 
-    printf("Name:     %s\n", name);
     printf("Semester: %s\n", semester_string);
     printf("\n");
     printf("\nID\tCourse                                \tCredits  Marks  GP  "
@@ -551,8 +570,7 @@ static void pdf_draw_header_top_data(HPDF_Doc pdf, HPDF_Page page,
     HPDF_Page_EndText(page);
 }
 
-static void export_to_pdf(const char *name, int semester, int *added_courses,
-                          int *added_course_marks, int added_course_count)
+static void export_to_pdf(const char *name)
 {
     char c;
 
@@ -600,27 +618,119 @@ pdf_err:
     HPDF_Free(pdf);
 }
 
+static struct semester_records *semester_records_init()
+{
+    struct semester_records *records = calloc(1, sizeof(*records));
+
+    if (!records)
+        return NULL;
+
+    return records;
+}
+
+static struct semester_record *semester_record_init(int semester,
+                                                    const int *courses,
+                                                    const int *marks,
+                                                    int course_count)
+{
+    struct semester_record *record = calloc(1, sizeof(*record));
+
+    if (!record)
+        return NULL;
+
+    record->semester = semester;
+    record->course_count = course_count;
+    memcpy(&record->courses, courses, sizeof(int) * course_count);
+    memcpy(&record->course_marks, marks, sizeof(int) * course_count);
+
+    for (int i = 0; i < course_count; i++)
+    {
+        int id = courses[i];
+        int credits = course_credits[id];
+        double gp = calc_gp(marks[id]);
+        record->credits += credits;
+        record->wgp += gp * credits;
+    }
+
+    record->tgpa = record->wgp / record->credits;
+    return record;
+}
+
+static struct semester_record *
+semester_records_add(struct semester_records *records, int semester,
+                     const int *courses, const int *marks, int course_count)
+{
+    struct semester_record **list =
+        realloc(records->list, sizeof(*list) * (records->count + 1));
+
+    if (!list)
+        return NULL;
+
+    records->list = list;
+
+    struct semester_record *record =
+        semester_record_init(semester, courses, marks, course_count);
+
+    if (!record)
+        return NULL;
+
+    records->list[records->count++] = record;
+    return record;
+}
+
+static void semester_record_free(struct semester_record *record)
+{
+    free(record);
+}
+
+static void semester_records_free(struct semester_records *records)
+{
+    for (int i = 0; i < records->count; i++)
+        semester_record_free(records->list[i]);
+
+    free(records->list);
+    free(records);
+}
+
 int main(void)
 {
-    int added_courses[MAX_COURSES];
-    int added_course_marks[MAX_COURSES];
-    int added_course_count = 0;
-    int semester = 0;
+    printf("Starting interactive transcript generation.\n");
+
+    struct semester_records *records = semester_records_init();
     char name[COURSE_NAME_MAX];
 
-    memset(name, 0, sizeof(name));
-    memset(added_courses, 0, sizeof(added_courses));
-    memset(added_course_marks, 0, sizeof(added_course_marks));
+    if (!records)
+    {
+        fprintf(stderr, "Memory allocation failed\n");
+        exit(1);
+    }
 
-    printf("Starting interactive transcript generation.\n");
+    memset(name, 0, sizeof(name));
     set_name(name);
-    set_semester(&semester);
-    add_courses_interactive(added_courses, added_course_marks,
-                            &added_course_count);
-    printf("\n");
-    print_transcript(name, semester, added_courses, added_course_marks,
-                     added_course_count);
-    export_to_pdf(name, semester, added_courses, added_course_marks,
-                  added_course_count);
+
+    for (;;)
+    {
+        int added_courses[MAX_COURSES];
+        int added_course_marks[MAX_COURSES];
+        int added_course_count = 0;
+        int semester = 0;
+
+        memset(added_courses, 0, sizeof(added_courses));
+        memset(added_course_marks, 0, sizeof(added_course_marks));
+
+        set_semester(&semester);
+
+        if (semester == 0)
+            break;
+
+        add_courses_interactive(added_courses, added_course_marks,
+                                &added_course_count);
+        semester_records_add(records, semester, added_courses,
+                             added_course_marks, added_course_count);
+        printf("\n");
+    }
+
+    export_to_pdf(name);
+    semester_records_free(records);
     return 0;
 }

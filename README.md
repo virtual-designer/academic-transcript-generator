@@ -53,13 +53,13 @@ First ensure that you have MinGW/gcc installed and available in your PATH.
 Then open a terminal in the project directory and run:
 
 ```bash
-gcc -Isrc -Iinclude -L. src/atsgen.c -lhpdf -o atsgen.exe
+gcc -Isrc -Iinclude -L. src\atsgen.c -lhpdf -o atsgen.exe
 ```
 
 If `gcc` is not in your PATH, you can run the following command as an alternative:
 
 ```bash
-<absolute_path_to_mingw>\gcc -Isrc -Iinclude -L. src/atsgen.c -lhpdf -o atsgen.exe
+<absolute_path_to_mingw>\gcc -Isrc -Iinclude -L. src\atsgen.c -lhpdf -o atsgen.exe
 ```
 
 While replacing `<absolute_path_to_mingw>` with the right path. If MinGW was installed as

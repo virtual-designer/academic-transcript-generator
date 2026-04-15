@@ -1,48 +1,25 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include <ctype.h>
-#include <unistd.h>
-#include <string.h>
+#include <hpdf.h>
 #include <inttypes.h>
 #include <limits.h>
-#include <hpdf.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #define PROMPT ">>> "
 
 static const int COURSE_NAME_MAX = 128;
 
 static const char *course_codes[] = {
-    "CSE115",
-    "CSE115L",
-    "CSE173",
-    "CSE215",
-    "CSE215L",
-    "CSE225",
-    "CSE225L",
-    "MAT116",
-    "MAT120",
-    "MAT125",
-    "ENG103",
-    "ENG105",
-    "ENG111",
+    "CSE115", "CSE115L", "CSE173", "CSE215", "CSE215L", "CSE225", "CSE225L",
+    "MAT116", "MAT120",  "MAT125", "ENG103", "ENG105",  "ENG111",
 };
 
-
 static int course_credits[] = {
-    3,
-    1,
-    3,
-    3,
-    1,
-    3,
-    1,
-    3,
-    3,
-    3,
-    3,
-    3,
-    3,
+    3, 1, 3, 3, 1, 3, 1, 3, 3, 3, 3, 3, 3,
 };
 
 static const char *course_names[] = {
@@ -116,135 +93,20 @@ static const char *get_letter_grade(double gp)
         return "F";
 }
 
-static void set_semester(int *semester)
-{
-    printf(PROMPT "Enter semester number (e.g. 261): ");
-    scanf("%d", semester);
-}
-
-static void set_name(char *name)
-{
-    printf(PROMPT "Enter your name: ");
-    fgets(name, COURSE_NAME_MAX, stdin);
-    name[strcspn(name, "\n")] = 0;
-}
-
-static void print_course_list(void)
-{
-    for (int i = 0; i < course_count; i++) {
-        printf("[%d]: %s - %s\n", i + 1,
-               course_codes[i], course_names[i]);
-    }
-
-    printf("\n");
-}
-
-static void add_courses_interactive(int *added_courses,
-                                    int *added_course_marks,
-                                    int *added_course_count)
-{
-    printf("Courses are listed below,");
-    printf(" please enter the appropriate course IDs");
-    printf(" indicated inside square brackets '[]').\n");
-    printf("**Enter 0 to stop adding courses and finalize the transcript.**\n\n");
-
-    print_course_list();
-
-    for (;;) {
-        printf(PROMPT "Enter course ID to add: ");
-
-        int course_id = -1;
-        scanf("%d", &course_id);
-
-        if (course_id == 0)
-            break;
-
-        if (course_id < 1 || course_id > course_count) {
-            printf("Invalid course ID: %d\n", course_id);
-            continue;
-        }
-
-        course_id--;
-
-        int marks = 0;
-        printf(PROMPT "Enter marks for [%d] %s - %s: ",
-               course_id + 1, course_codes[course_id],
-               course_names[course_id]);
-
-        scanf("%d", &marks);
-
-        if (marks < 0 || marks > 100) {
-            printf("Invalid marks: must be in between 0 to 100\n");
-            continue;
-        }
-
-        added_courses[*added_course_count] = course_id;
-        (*added_course_count)++;
-        added_course_marks[course_id] = marks;
-
-        printf("Course added: %s - %s [Marks: %d/100]\n\n", course_codes[course_id],
-               course_names[course_id], marks);
-
-        if ((*added_course_count) >= MAX_COURSES) {
-            printf("Max course limit exceeded (%d), no more course entries allowed\n",
-                   *added_course_count);
-            break;
-        }
-    }
-}
-
-void print_transcript(const char *name, int semester, int *added_courses,
-                      int *added_course_marks, int added_course_count)
-{
-    printf("Name:     %s\n", name);
-    printf("Semester: %d\n", semester);
-    printf("\n");
-    printf("\nID\tCourse                                \tCredits  Marks  GP    Grade\n");
-
-    double wgp = 0;
-    double credits = 0;
-
-    for (int i = 0; i < added_course_count; i++) {
-        int course_id = added_courses[i];
-        printf("[%d]\t%s - %s", course_id + 1, course_codes[course_id],
-               course_names[course_id]);
-
-        for (size_t j = 0; j < 38 - 3 - strlen(course_codes[course_id]) - strlen(course_names[course_id]); j++)
-            printf(" ");
-
-        double gp = calc_gp(added_course_marks[course_id]);
-
-        printf("  %d        %-3d    %1.2lf  %s\n",course_credits[course_id],
-                added_course_marks[course_id], gp,
-                get_letter_grade(gp));
-
-        credits += course_credits[course_id];
-        wgp += gp * course_credits[course_id];
-    }
-
-    double sgpa = wgp / credits;
-    printf("\nSGPA: %1.2lf (%s)\n", sgpa, get_letter_grade(sgpa));
-}
-
-static void pdf_error_handler(HPDF_STATUS code, HPDF_STATUS detail, void *ignored)
-{
-    fprintf(stderr, "libharu error: code=%" PRIu64 "x, detail=%" PRIu64 "x\n", (uint64_t) code,
-            (uint64_t) detail);
-    exit(1);
-}
-
 static char *get_semester_string(int semester)
 {
     char semester_string[128] = {0};
 
-    if (semester < 100 || semester > 999) {
+    if (semester < 100 || semester > 999)
+    {
         return NULL;
     }
 
     int digit = semester % 10;
     char *name;
 
-    switch (digit) {
+    switch (digit)
+    {
         case 1:
             name = "Spring";
             break;
@@ -266,22 +128,446 @@ static char *get_semester_string(int semester)
     return strdup(semester_string);
 }
 
+static void set_semester(int *semester)
+{
+    printf(PROMPT "Enter semester number (e.g. 261): ");
+    scanf("%d", semester);
+    char *semester_string = get_semester_string(*semester);
+
+    if (!semester_string)
+    {
+        fprintf(stderr, "Invalid semester\n");
+        exit(1);
+    }
+
+    printf("Semester set to %s\n", semester_string);
+    free(semester_string);
+}
+
+static void set_name(char *name)
+{
+    printf(PROMPT "Enter your name: ");
+    fgets(name, COURSE_NAME_MAX, stdin);
+    name[strcspn(name, "\n")] = 0;
+}
+
+static void print_course_list(void)
+{
+    for (int i = 0; i < course_count; i++)
+    {
+        printf("[%d]: %s - %s\n", i + 1, course_codes[i], course_names[i]);
+    }
+
+    printf("\n");
+}
+
+static void add_courses_interactive(int *added_courses, int *added_course_marks,
+                                    int *added_course_count)
+{
+    printf("Courses are listed below,");
+    printf(" please enter the appropriate course IDs");
+    printf(" indicated inside square brackets '[]').\n");
+    printf(
+        "**Enter 0 to stop adding courses and finalize the transcript.**\n\n");
+
+    print_course_list();
+
+    for (;;)
+    {
+        printf(PROMPT "Enter course ID to add: ");
+
+        int course_id = -1;
+        scanf("%d", &course_id);
+
+        if (course_id == 0)
+            break;
+
+        if (course_id < 1 || course_id > course_count)
+        {
+            printf("Invalid course ID: %d\n", course_id);
+            continue;
+        }
+
+        course_id--;
+
+        int marks = 0;
+        printf(PROMPT "Enter marks for [%d] %s - %s: ", course_id + 1,
+               course_codes[course_id], course_names[course_id]);
+
+        scanf("%d", &marks);
+
+        if (marks < 0 || marks > 100)
+        {
+            printf("Invalid marks: must be in between 0 to 100\n");
+            continue;
+        }
+
+        added_courses[*added_course_count] = course_id;
+        (*added_course_count)++;
+        added_course_marks[course_id] = marks;
+
+        printf("Course added: %s - %s [Marks: %d/100]\n\n",
+               course_codes[course_id], course_names[course_id], marks);
+
+        if ((*added_course_count) >= MAX_COURSES)
+        {
+            printf("Max course limit exceeded (%d), no more course entries "
+                   "allowed\n",
+                   *added_course_count);
+            break;
+        }
+    }
+}
+
+void print_transcript(const char *name, int semester, int *added_courses,
+                      int *added_course_marks, int added_course_count)
+{
+    char *semester_string = get_semester_string(semester);
+
+    printf("Name:     %s\n", name);
+    printf("Semester: %s\n", semester_string);
+    printf("\n");
+    printf("\nID\tCourse                                \tCredits  Marks  GP  "
+           "  Grade\n");
+
+    free(semester_string);
+
+    double wgp = 0;
+    double credits = 0;
+
+    for (int i = 0; i < added_course_count; i++)
+    {
+        int course_id = added_courses[i];
+        printf("[%d]\t%s - %s", course_id + 1, course_codes[course_id],
+               course_names[course_id]);
+
+        for (size_t j = 0; j < 38 - 3 - strlen(course_codes[course_id]) -
+                                   strlen(course_names[course_id]);
+             j++)
+            printf(" ");
+
+        double gp = calc_gp(added_course_marks[course_id]);
+
+        printf("  %d        %-3d    %1.2lf  %s\n", course_credits[course_id],
+               added_course_marks[course_id], gp, get_letter_grade(gp));
+
+        credits += course_credits[course_id];
+        wgp += gp * course_credits[course_id];
+    }
+
+    double tgpa = wgp / credits;
+    printf("\nTGPA: %1.2lf (%s)\n", tgpa, get_letter_grade(tgpa));
+}
+
+static void pdf_error_handler(HPDF_STATUS code, HPDF_STATUS detail,
+                              void *ignored)
+{
+    fprintf(stderr, "libharu error: code=%" PRIu64 ", detail=%" PRIu64 "\n",
+            (uint64_t) code, (uint64_t) detail);
+    exit(1);
+}
+
+#define PDF_FONT_NORMAL HPDF_GetFont(pdf, "Times-Roman", NULL)
+#define PDF_FONT_BOLD HPDF_GetFont(pdf, "Times-Bold", NULL)
+#define PDF_FONT_BOLD_ITALIC HPDF_GetFont(pdf, "Times-BoldItalic", NULL)
+
+static void pdf_text(HPDF_Page page, HPDF_Font font, HPDF_REAL size,
+                     HPDF_REAL x, HPDF_REAL y, const char *text)
+{
+    HPDF_Page_SetFontAndSize(page, font, size);
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, x, y, text);
+    HPDF_Page_EndText(page);
+}
+
+static void pdf_draw_header_title(HPDF_Doc pdf, HPDF_Page page)
+{
+    const HPDF_REAL page_h = HPDF_Page_GetHeight(page);
+    const HPDF_REAL page_w = HPDF_Page_GetWidth(page);
+    const HPDF_REAL size_hi = 30;
+    const HPDF_REAL size_lo = 22;
+
+    const char *text_N = "N";
+    const char *text_S = "S";
+    const char *text_U = "U";
+    const char *text_orth = " O R T H  ";
+    const char *text_outh = " O U T H  ";
+    const char *text_niversity = " N I V E R S I T Y";
+
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, size_hi);
+
+    const HPDF_REAL text_N_w = HPDF_Page_TextWidth(page, text_N);
+    const HPDF_REAL text_S_w = HPDF_Page_TextWidth(page, text_S);
+    const HPDF_REAL text_U_w = HPDF_Page_TextWidth(page, text_U);
+
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, size_lo);
+
+    const HPDF_REAL text_orth_w = HPDF_Page_TextWidth(page, text_orth);
+    const HPDF_REAL text_outh_w = HPDF_Page_TextWidth(page, text_outh);
+    const HPDF_REAL text_niversity_w =
+        HPDF_Page_TextWidth(page, text_niversity);
+    const HPDF_REAL text_w_total = text_N_w + text_S_w + text_U_w +
+                                   text_orth_w + text_outh_w + text_niversity_w;
+
+    const HPDF_REAL title_x = (page_w - text_w_total) / 2.0;
+    const HPDF_REAL title_y = page_h - 50;
+
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, size_hi);
+    HPDF_Page_SetRGBFill(page, 0.0f, 123.0f / 255.0f, 1.0f);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, title_x, title_y, text_N);
+    HPDF_Page_EndText(page);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, title_x + text_N_w + text_orth_w, title_y, text_S);
+    HPDF_Page_EndText(page);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page,
+                      title_x + text_N_w + text_orth_w + text_S_w + text_outh_w,
+                      title_y, text_U);
+    HPDF_Page_EndText(page);
+
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, size_lo);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, title_x + text_N_w, title_y, text_orth);
+    HPDF_Page_EndText(page);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, title_x + text_N_w + text_orth_w + text_S_w,
+                      title_y, text_outh);
+    HPDF_Page_EndText(page);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page,
+                      title_x + text_N_w + text_orth_w + text_S_w +
+                          text_outh_w + text_U_w,
+                      title_y, text_niversity);
+    HPDF_Page_EndText(page);
+
+    HPDF_Page_SetRGBFill(page, 0.0f, 0.0f, 0.0f);
+}
+
+static void pdf_draw_header_slogan(HPDF_Doc pdf, HPDF_Page page)
+{
+    const HPDF_REAL page_h = HPDF_Page_GetHeight(page);
+    const HPDF_REAL page_w = HPDF_Page_GetWidth(page);
+    const HPDF_REAL size_hi = 11.25;
+    const HPDF_REAL size_lo = 9.25;
+
+    const char *text_T = "T";
+    const char *text_F = "F";
+    const char *text_P = "P";
+    const char *text_U = "U";
+    const char *text_I = "I";
+    const char *text_B = "B";
+
+    const char *text_he = "  H  E    ";
+    const char *text_irst = "  I  R  S  T    ";
+    const char *text_rivate = "  R  I  V  A  T  E    ";
+    const char *text_niversity = "  N  I  V  E  R  S  I  T  Y    ";
+    const char *text_n = "  N    ";
+    const char *text_angladesh = "  A  N  G  L  A  D  E  S  H";
+
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, size_hi);
+
+    const HPDF_REAL text_T_w = HPDF_Page_TextWidth(page, text_T);
+    const HPDF_REAL text_F_w = HPDF_Page_TextWidth(page, text_F);
+    const HPDF_REAL text_P_w = HPDF_Page_TextWidth(page, text_P);
+    const HPDF_REAL text_U_w = HPDF_Page_TextWidth(page, text_U);
+    const HPDF_REAL text_I_w = HPDF_Page_TextWidth(page, text_I);
+    const HPDF_REAL text_B_w = HPDF_Page_TextWidth(page, text_B);
+
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, size_lo);
+
+    const HPDF_REAL text_he_w = HPDF_Page_TextWidth(page, text_he);
+    const HPDF_REAL text_irst_w = HPDF_Page_TextWidth(page, text_irst);
+    const HPDF_REAL text_rivate_w = HPDF_Page_TextWidth(page, text_rivate);
+    const HPDF_REAL text_niversity_w =
+        HPDF_Page_TextWidth(page, text_niversity);
+    const HPDF_REAL text_n_w = HPDF_Page_TextWidth(page, text_n);
+    const HPDF_REAL text_angladesh_w =
+        HPDF_Page_TextWidth(page, text_angladesh);
+    const HPDF_REAL text_w_total =
+        text_T_w + text_F_w + text_P_w + text_U_w + text_I_w + text_B_w +
+        text_he_w + text_irst_w + text_rivate_w + text_niversity_w + text_n_w +
+        text_angladesh_w;
+
+    const HPDF_REAL slogan_x = (page_w - text_w_total) / 2.0 - 2.0;
+    const HPDF_REAL slogan_y = page_h - 64;
+
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, size_hi);
+    HPDF_Page_SetRGBFill(page, 0.4f, 0.4f, 0.4f);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, slogan_x, slogan_y, text_T);
+    HPDF_Page_TextOut(page, slogan_x + text_T_w + text_he_w, slogan_y, text_F);
+    HPDF_Page_TextOut(page,
+                      slogan_x + text_T_w + text_he_w + text_F_w + text_irst_w,
+                      slogan_y, text_P);
+    HPDF_Page_TextOut(page,
+                      slogan_x + text_T_w + text_he_w + text_F_w + text_irst_w +
+                          text_P_w + text_rivate_w,
+                      slogan_y, text_U);
+    HPDF_Page_TextOut(page,
+                      slogan_x + text_T_w + text_he_w + text_F_w + text_irst_w +
+                          text_P_w + text_rivate_w + text_U_w +
+                          text_niversity_w,
+                      slogan_y, text_I);
+    HPDF_Page_TextOut(page,
+                      slogan_x + text_T_w + text_he_w + text_F_w + text_irst_w +
+                          text_P_w + text_rivate_w + text_U_w +
+                          text_niversity_w + text_I_w + text_n_w,
+                      slogan_y, text_B);
+    HPDF_Page_EndText(page);
+
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, size_lo);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, slogan_x + text_T_w, slogan_y, text_he);
+    HPDF_Page_TextOut(page, slogan_x + text_T_w + text_he_w + text_F_w,
+                      slogan_y, text_irst);
+    HPDF_Page_TextOut(page,
+                      slogan_x + text_T_w + text_he_w + text_F_w + text_irst_w +
+                          text_P_w,
+                      slogan_y, text_rivate);
+    HPDF_Page_TextOut(page,
+                      slogan_x + text_T_w + text_he_w + text_F_w + text_irst_w +
+                          text_P_w + text_rivate_w + text_U_w,
+                      slogan_y, text_niversity);
+    HPDF_Page_TextOut(page,
+                      slogan_x + text_T_w + text_he_w + text_F_w + text_irst_w +
+                          text_P_w + text_rivate_w + text_U_w +
+                          text_niversity_w + text_I_w,
+                      slogan_y, text_n);
+    HPDF_Page_TextOut(page,
+                      slogan_x + text_T_w + text_he_w + text_F_w + text_irst_w +
+                          text_P_w + text_rivate_w + text_U_w +
+                          text_niversity_w + text_I_w + text_n_w + text_B_w,
+                      slogan_y, text_angladesh);
+    HPDF_Page_EndText(page);
+
+    HPDF_Page_SetRGBFill(page, 0.0f, 0.0f, 0.0f);
+}
+
+static void pdf_draw_header_addr(HPDF_Doc pdf, HPDF_Page page)
+{
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, 11.5);
+
+    const HPDF_REAL page_h = HPDF_Page_GetHeight(page);
+    const HPDF_REAL page_w = HPDF_Page_GetWidth(page);
+    const char *addr_text1 = "Plot # 15, Block # B, Bashundhara, Dhaka-1229, "
+                             "Bangladesh, Phone 880 (2) 8852000,";
+    const char *addr_text2 =
+        "Fax: 880 (2) 8852016, Email: controller@northsouth.edu, Website: "
+        "www.northsouth.edu";
+    const HPDF_REAL addr_text1_w = HPDF_Page_TextWidth(page, addr_text1);
+    const HPDF_REAL addr_text2_w = HPDF_Page_TextWidth(page, addr_text2);
+    const HPDF_REAL addr_text1_x = (page_w - addr_text1_w) / 2.0;
+    const HPDF_REAL addr_text2_x = (page_w - addr_text2_w) / 2.0;
+    const HPDF_REAL addr_text1_y = page_h - 78;
+    const HPDF_REAL addr_text2_y = page_h - 89.5;
+
+    HPDF_Page_SetRGBFill(page, 0.4f, 0.4f, 0.4f);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, addr_text1_x, addr_text1_y, addr_text1);
+    HPDF_Page_TextOut(page, addr_text2_x, addr_text2_y, addr_text2);
+    HPDF_Page_EndText(page);
+
+    HPDF_Page_SetRGBFill(page, 0.0f, 0.0f, 0.0f);
+}
+
+static void pdf_draw_header_office(HPDF_Doc pdf, HPDF_Page page)
+{
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_BOLD_ITALIC, 16);
+
+    const HPDF_REAL page_h = HPDF_Page_GetHeight(page);
+    const HPDF_REAL page_w = HPDF_Page_GetWidth(page);
+    const char *office_text = "Office of The Controller of Examinations";
+    const HPDF_REAL office_text_w = HPDF_Page_TextWidth(page, office_text);
+    const HPDF_REAL office_text_x = (page_w - office_text_w) / 2.0;
+    const HPDF_REAL office_text_y = page_h - 110;
+
+    HPDF_Page_SetRGBFill(page, 0.4f, 0.4f, 0.4f);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, office_text_x, office_text_y, office_text);
+    HPDF_Page_EndText(page);
+
+    HPDF_Page_SetRGBFill(page, 0.0f, 0.0f, 0.0f);
+}
+
+static void pdf_draw_header(HPDF_Doc pdf, HPDF_Page page)
+{
+    pdf_draw_header_title(pdf, page);
+    pdf_draw_header_slogan(pdf, page);
+    pdf_draw_header_addr(pdf, page);
+    pdf_draw_header_office(pdf, page);
+}
+
+static void pdf_draw_header_top_data(HPDF_Doc pdf, HPDF_Page page,
+                                     const char *name)
+{
+    const HPDF_REAL page_h = HPDF_Page_GetHeight(page);
+    const HPDF_REAL page_w = HPDF_Page_GetWidth(page);
+    const HPDF_REAL x = page_w / 2 + 25;
+    const HPDF_REAL y = page_h - 150;
+    const HPDF_REAL val_off = 95;
+    int iota = 0;
+
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_BOLD, 10);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, x, y + 16, "Official Transcript");
+    HPDF_Page_TextOut(page, x + val_off, y + 16, "16 Apr 2026");
+    HPDF_Page_EndText(page);
+
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_BOLD, 8);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, x, y, "Student Name:");
+    HPDF_Page_TextOut(page, x, y - (iota += 10), "Student ID:");
+    HPDF_Page_TextOut(page, x, y - (iota += 10), "Date of Birth:");
+    HPDF_Page_TextOut(page, x, y - (iota += 10), "Degree Conferred:");
+    HPDF_Page_EndText(page);
+
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, 8);
+
+    /* FIXME: Hard coded data */
+
+    iota = 0;
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, x + val_off, y, name);
+    HPDF_Page_TextOut(page, x + val_off, y - (iota += 10), "2619824 0 42");
+    HPDF_Page_TextOut(page, x + val_off, y - (iota += 10), "20 Apr 2008");
+    HPDF_Page_TextOut(page, x + val_off, y - (iota += 10),
+                      "Bachelor of Science in Computer");
+    HPDF_Page_TextOut(page, x + val_off, y - (iota += 10),
+                      "Science & Engineering");
+    HPDF_Page_EndText(page);
+}
+
 static void export_to_pdf(const char *name, int semester, int *added_courses,
-                         int *added_course_marks, int added_course_count)
+                          int *added_course_marks, int added_course_count)
 {
     char c;
 
     printf(PROMPT "Save as PDF? [y/N, filename=transcript.pdf]: ");
     scanf(" %c", &c);
 
-    if (tolower(c) != 'y') {
+    if (tolower(c) != 'y')
+    {
         printf("Not saving this transcript.\n");
         return;
     }
 
 #ifdef _WIN32
     const char path_sep = '\\';
-#else /* not _WIN32 */
+#else  /* not _WIN32 */
     const char path_sep = '/';
 #endif /* _WIN32 */
 
@@ -291,231 +577,26 @@ static void export_to_pdf(const char *name, int semester, int *added_courses,
 
     HPDF_Doc pdf = HPDF_New(&pdf_error_handler, NULL);
 
-    if (!pdf) {
+    if (!pdf)
+    {
         fprintf(stderr, "Error: cannot initialize HPDF\n");
         return;
     }
 
     HPDF_Page page = HPDF_AddPage(pdf);
     HPDF_Page_SetSize(page, HPDF_PAGE_SIZE_A4, HPDF_PAGE_PORTRAIT);
+    HPDF_Font font = PDF_FONT_NORMAL;
+    HPDF_Font font_bold = PDF_FONT_BOLD;
 
-    HPDF_Font font = HPDF_GetFont(pdf, "Helvetica", NULL);
-    HPDF_Font font_bold = HPDF_GetFont(pdf, "Helvetica-Bold", NULL);
+    pdf_draw_header(pdf, page);
+    pdf_draw_header_top_data(pdf, page, name);
 
-    const char *title = "North South University";
-    const char *subtitle = "Academic Transcript";
-
-    const float page_width = HPDF_Page_GetWidth(page);
-    const float page_height = HPDF_Page_GetHeight(page);
-
-    HPDF_Page_SetFontAndSize(page, font, 30);
-    const float title_width = HPDF_Page_TextWidth(page, title);
-    HPDF_Page_SetRGBFill(page, 0.0f, 123.0f / 255.0f, 1.0f);
-    HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, (page_width - title_width) / 2.0f,
-                      page_height - 64, title);
-    HPDF_Page_EndText(page);
-
-    HPDF_Page_SetFontAndSize(page, font, 20);
-    HPDF_Page_SetRGBFill(page, 0.0f, 0.0f, 0.0f);
-    const float subtitle_width = HPDF_Page_TextWidth(page, subtitle);
-    HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, (page_width - subtitle_width) / 2.0f,
-                      page_height - 95, subtitle);
-    HPDF_Page_EndText(page);
-
-    HPDF_Page_SetFontAndSize(page, font_bold, 12);
-
-    const char *name_field = "Student name:";
-    const char *semester_field = "Semester:";
-    const char *sgpa_field = "SGPA:";
-    const char *sgrade_field = "Semester grade:";
-    const int field_off_x = 50;
-    const int field_value_off_x = 140;
-
-    HPDF_Page_SetRGBFill(page, 0.0f, 0.0f, 0.0f);
-    HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, field_off_x, page_height - 150, name_field);
-    HPDF_Page_EndText(page);
-
-    HPDF_Page_SetRGBFill(page, 0.0f, 0.0f, 0.0f);
-    HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, field_off_x, page_height - 170, semester_field);
-    HPDF_Page_EndText(page);
-
-    HPDF_Page_SetRGBFill(page, 0.0f, 0.0f, 0.0f);
-    HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, field_off_x, page_height - 190, sgpa_field);
-    HPDF_Page_EndText(page);
-
-    HPDF_Page_SetRGBFill(page, 0.0f, 0.0f, 0.0f);
-    HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, field_off_x, page_height - 210, sgrade_field);
-    HPDF_Page_EndText(page);
-
-    HPDF_Page_SetFontAndSize(page, font, 12);
-    HPDF_Page_SetRGBFill(page, 0.0f, 0.0f, 0.0f);
-    HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, field_off_x + field_value_off_x, page_height - 150, name);
-    HPDF_Page_EndText(page);
-
-    char *semester_string = get_semester_string(semester);
-
-    if (!semester_string)
-        goto pdf_err;
-
-    HPDF_Page_SetRGBFill(page, 0.0f, 0.0f, 0.0f);
-    HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, field_off_x + field_value_off_x, page_height - 170, semester_string);
-    HPDF_Page_EndText(page);
-
-    const int rows = added_course_count + 1;
-    const float row_height = 20;
-    const float table_w = page_width - 100, table_h = row_height * rows + rows - 1;
-    const float table_x = 50, table_y = page_height - 240 - table_h;
-
-    HPDF_Page_SetLineWidth(page, 1);
-    HPDF_Page_Rectangle(page, table_x, table_y, table_w, table_h);
-    HPDF_Page_Stroke(page);
-
-    HPDF_Page_SetRGBStroke(page, 0.0f, 0.0f, 0.0f);
-
-    const int id_col_text_off_x = 5;
-    const int id_col_off_x = id_col_text_off_x + 25;
-    const int course_title_col_text_off_x = id_col_off_x + 5 + 1;
-    const int course_title_col_off_x = course_title_col_text_off_x + 220;
-    const int credits_col_text_off_x = course_title_col_off_x + 5 + 1;
-    const int credits_col_off_x = credits_col_text_off_x + 60;
-    const int marks_col_text_off_x = credits_col_off_x + 5 + 1;
-    const int marks_col_off_x = marks_col_text_off_x + 60;
-    const int gp_col_text_off_x = marks_col_off_x + 5 + 1;
-    const int gp_col_off_x = gp_col_text_off_x + 40;
-    const int grade_col_text_off_x = gp_col_off_x + 5 + 1;
-    const int grade_col_off_x = grade_col_text_off_x + 60;
-    const int cols = 6;
-    const int col_off_x_list[6] = {
-        id_col_off_x,
-        course_title_col_off_x,
-        credits_col_off_x,
-        marks_col_off_x,
-        gp_col_off_x,
-        grade_col_off_x,
-    };
-
-    HPDF_Page_SetFontAndSize(page, font_bold, 12);
-
-    for (int i = 1; i < rows; i++) {
-        HPDF_Page_MoveTo(page, table_x, table_y + table_h - ((row_height + 1) * i));
-        HPDF_Page_LineTo(page, table_w + table_x, table_y + table_h - ((row_height + 1) * i));
-        HPDF_Page_Stroke(page);
-
-        if (i == 1) {
-            const int y = table_y + table_h - 15;
-            HPDF_Page_BeginText(page);
-            HPDF_Page_TextOut(page, table_x + id_col_text_off_x, y, "ID");
-            HPDF_Page_EndText(page);
-
-            HPDF_Page_BeginText(page);
-            HPDF_Page_TextOut(page, table_x + course_title_col_text_off_x, y, "Course Title");
-            HPDF_Page_EndText(page);
-
-            HPDF_Page_BeginText(page);
-            HPDF_Page_TextOut(page, table_x + credits_col_text_off_x, y, "Credits");
-            HPDF_Page_EndText(page);
-
-            HPDF_Page_BeginText(page);
-            HPDF_Page_TextOut(page, table_x + marks_col_text_off_x, y, "Marks");
-            HPDF_Page_EndText(page);
-
-            HPDF_Page_BeginText(page);
-            HPDF_Page_TextOut(page, table_x + gp_col_text_off_x, y, "GP");
-            HPDF_Page_EndText(page);
-
-            HPDF_Page_BeginText(page);
-            HPDF_Page_TextOut(page, table_x + grade_col_text_off_x, y, "Grade");
-            HPDF_Page_EndText(page);
-        }
-    }
-
-    for (int i = 0; i < cols - 1; i++) {
-        HPDF_Page_MoveTo(page, table_x + col_off_x_list[i], table_y);
-        HPDF_Page_LineTo(page, table_x + col_off_x_list[i], table_y + table_h);
-        HPDF_Page_Stroke(page);
-    }
-
-    double wgp = 0;
-    double credits = 0;
-
-    HPDF_Page_SetFontAndSize(page, font, 12);
-
-    for (int i = 0; i < added_course_count; i++) {
-        int course_id = added_courses[i];
-        const int y = table_y + table_h - 15 - (20 * (i + 1)) - i;
-
-        char id_str[16] = {0};
-        snprintf(id_str, sizeof id_str, "%d", course_id + 1);
-
-        char credits_str[16] = {0};
-        snprintf(credits_str, sizeof credits_str, "%d", course_credits[course_id]);
-
-        char marks_str[16] = {0};
-        snprintf(marks_str, sizeof marks_str, "%d", added_course_marks[course_id]);
-
-        double gp = calc_gp(added_course_marks[course_id]);
-
-        char gp_str[16] = {0};
-        snprintf(gp_str, sizeof gp_str, "%1.2lf", gp);
-
-        const char *letter_grade = get_letter_grade(gp);
-
-        HPDF_Page_BeginText(page);
-        HPDF_Page_TextOut(page, table_x + id_col_text_off_x, y, id_str);
-        HPDF_Page_EndText(page);
-
-        HPDF_Page_BeginText(page);
-        HPDF_Page_TextOut(page, table_x + course_title_col_text_off_x, y, course_names[course_id]);
-        HPDF_Page_EndText(page);
-
-        HPDF_Page_BeginText(page);
-        HPDF_Page_TextOut(page, table_x + credits_col_text_off_x, y, credits_str);
-        HPDF_Page_EndText(page);
-
-        HPDF_Page_BeginText(page);
-        HPDF_Page_TextOut(page, table_x + marks_col_text_off_x, y, marks_str);
-        HPDF_Page_EndText(page);
-
-        HPDF_Page_BeginText(page);
-        HPDF_Page_TextOut(page, table_x + gp_col_text_off_x, y, gp_str);
-        HPDF_Page_EndText(page);
-
-        HPDF_Page_BeginText(page);
-        HPDF_Page_TextOut(page, table_x + grade_col_text_off_x, y, letter_grade);
-        HPDF_Page_EndText(page);
-
-        credits += course_credits[course_id];
-        wgp += gp * course_credits[course_id];
-    }
-
-    double sgpa = wgp / credits;
-    char sgpa_str[16] = {0};
-    snprintf(sgpa_str, sizeof sgpa_str, "%1.2lf", sgpa);
-
-    HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, field_off_x + field_value_off_x, page_height - 190, sgpa_str);
-    HPDF_Page_EndText(page);
-
-    HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, field_off_x + field_value_off_x, page_height - 210, get_letter_grade(sgpa));
-    HPDF_Page_EndText(page);
-
-    free(semester_string);
     HPDF_SaveToFile(pdf, "transcript.pdf");
     HPDF_Free(pdf);
 
     return;
 
 pdf_err:
-    free(semester_string);
     HPDF_Free(pdf);
 }
 
@@ -527,9 +608,9 @@ int main(void)
     int semester = 0;
     char name[COURSE_NAME_MAX];
 
-    memset(name, 0, sizeof (name));
-    memset(added_courses, 0, sizeof (added_courses));
-    memset(added_course_marks, 0, sizeof (added_course_marks));
+    memset(name, 0, sizeof(name));
+    memset(added_courses, 0, sizeof(added_courses));
+    memset(added_course_marks, 0, sizeof(added_course_marks));
 
     printf("Starting interactive transcript generation.\n");
     set_name(name);

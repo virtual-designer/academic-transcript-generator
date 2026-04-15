@@ -13,7 +13,19 @@ build-linux:
 build-darwin:
 	$(CC) $(CFLAGS) -I/opt/homebrew/include -L/opt/homebrew/lib src/$(BIN).c -lhpdf -o $(BIN)
 
+build-windows:
+	$(CC) $(CFLAGS) -Isrc -Iinclude -L. src/$(BIN).c -lhpdf -o $(BIN).exe
+
+run-linux: build-linux
+	./$(BIN)
+	
+run-darwin: build-darwin
+	./$(BIN)
+
+run-windows: build-windows
+	./$(BIN).exe
+
 clean:
 	$(RM) $(BIN)
 
-.PHONY: all clean build-linux build-darwin
+.PHONY: all clean build-linux build-darwin build-windows run-linux run-darwin run-windows

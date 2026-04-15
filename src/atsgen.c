@@ -1,11 +1,12 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <ctype.h>
 #include <unistd.h>
-#include <hpdf.h>
+#include <string.h>
+#include <inttypes.h>
 #include <limits.h>
+#include <hpdf.h>
 
 #define PROMPT ">>> "
 
@@ -227,7 +228,7 @@ void print_transcript(const char *name, int semester, int *added_courses,
 
 static void pdf_error_handler(HPDF_STATUS code, HPDF_STATUS detail, void *ignored)
 {
-    fprintf(stderr, "libharu error: code=%04lx, detail=%ld\n", (uint64_t) code,
+    fprintf(stderr, "libharu error: code=%" PRIu64 "x, detail=%" PRIu64 "x\n", (uint64_t) code,
             (uint64_t) detail);
     exit(1);
 }

@@ -1,14 +1,16 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -std=gnu99 -O2
+CC ?= gcc
+CFLAGS ?= -Wall -Wextra -pedantic -std=gnu99 -O2
 RM = rm -f
 
-BIN = src/atsgen
+BIN = atsgen
 
-all: $(BIN)
-$(BIN):
-	$(CC) $(CFLAGS) $@.c -o $@
+all:
+	@echo Please use 'make build-<platform>' && exit 1
+
+build-linux:
+	$(CC) $(CFLAGS) src/$(BIN).c -lhpdf -o $(BIN)
 
 clean:
 	$(RM) $(BIN)
 
-.PHONY: all clean
+.PHONY: all clean build

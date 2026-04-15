@@ -2,7 +2,7 @@
 
 This is a project for the CSE115L course at my university.
 
-## Installation
+## Building the project
 
 ### GNU/Linux
 

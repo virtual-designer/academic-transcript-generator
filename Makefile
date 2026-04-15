@@ -1,5 +1,5 @@
 CC ?= gcc
-CFLAGS ?= -Wall -Wextra -pedantic -std=gnu99 -O2
+CFLAGS ?= -Wall -Wextra -pedantic -Wno-unused-parameter -std=gnu99 -O2
 RM = rm -f
 
 BIN = atsgen

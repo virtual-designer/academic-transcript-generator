@@ -41,6 +41,12 @@ struct semester_records
     int count;
 };
 
+struct str_parts
+{
+    char **parts;
+    size_t count;
+};
+
 static const char *course_codes[] = {
     "CSE115", "CSE115L", "CSE173", "CSE215", "CSE215L", "CSE225", "CSE225L",
     "MAT116", "MAT120",  "MAT125", "ENG103", "ENG105",  "ENG111",
@@ -67,6 +73,63 @@ static const char *course_names[] = {
 };
 
 static const int course_count = 13;
+
+static void str_parts_free(struct str_parts *s_parts)
+{
+    for (size_t i = 0; i < s_parts->count; i++)
+        free(s_parts->parts[i]);
+
+    free(s_parts->parts);
+}
+
+static struct str_parts *str_chunk_word(const char *str, size_t limit)
+{
+    size_t len = strlen(str);
+    char **parts = NULL;
+    size_t count = 0, last_off = 0;
+
+    for (size_t i = 0; i < len; i++)
+    {
+        if (!isspace(str[i]) && i + 1 < len)
+        {
+            continue;
+        }
+
+        if (i - last_off + 1 >= limit || i + 1 >= len)
+        {
+            char *part = strndup(str + last_off, i - last_off + 1);
+            last_off = i + 1;
+
+            if (!part)
+                goto str_chunk_err;
+
+            char **new_parts = realloc(parts, sizeof(char *) * (count + 1));
+
+            if (!new_parts)
+                goto str_chunk_err;
+
+            parts = new_parts;
+            parts[count++] = part;
+        }
+    }
+
+    struct str_parts *str_parts = malloc(sizeof(*str_parts));
+
+    if (!str_parts)
+        goto str_chunk_err;
+
+    str_parts->count = count;
+    str_parts->parts = parts;
+
+    return str_parts;
+
+str_chunk_err:
+    for (size_t i = 0; i < count; i++)
+        free(parts[i]);
+
+    free(parts);
+    return NULL;
+}
 
 static const char *date_get_month(int month)
 {
@@ -603,8 +666,8 @@ static void pdf_draw_header(HPDF_Doc pdf, HPDF_Page page)
     pdf_draw_header_office(pdf, page);
 }
 
-static void pdf_draw_header_top_data(HPDF_Doc pdf, HPDF_Page page,
-                                     const char *name)
+static bool pdf_draw_header_top_data(HPDF_Doc pdf, HPDF_Page page,
+                                     struct semester_records *records)
 {
     const HPDF_REAL page_h = HPDF_Page_GetHeight(page);
     const HPDF_REAL page_w = HPDF_Page_GetWidth(page);
@@ -616,7 +679,7 @@ static void pdf_draw_header_top_data(HPDF_Doc pdf, HPDF_Page page,
     HPDF_Page_SetFontAndSize(page, PDF_FONT_BOLD, 10);
 
     HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, x, y + 16, "Official Transcript");
+    HPDF_Page_TextOut(page, x, y + 16, "Demo Transcript");
     HPDF_Page_TextOut(page, x + val_off, y + 16, "16 Apr 2026");
     HPDF_Page_EndText(page);
 
@@ -631,19 +694,37 @@ static void pdf_draw_header_top_data(HPDF_Doc pdf, HPDF_Page page,
 
     HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, 8);
 
-    /* FIXME: Hard coded data */
-
     iota = 0;
+    char id_str[16] = {0};
+    snprintf(id_str, sizeof id_str, "%07" PRIu64 " %01" PRIu64 " %02" PRIu64 "",
+             records->id / 1000, (records->id / 100) % 10, records->id % 100);
+    char dob_str[64] = {0};
+    snprintf(dob_str, sizeof dob_str, "%02d %.3s %04d", records->dob.d,
+             date_get_month(records->dob.m), records->dob.y);
+
+    struct str_parts *degree_parts =
+        str_chunk_word(get_degree_from_id(records->id), 30);
+
+    if (!degree_parts)
+    {
+        return false;
+    }
 
     HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, x + val_off, y, name);
-    HPDF_Page_TextOut(page, x + val_off, y - (iota += 10), "2619824 0 42");
-    HPDF_Page_TextOut(page, x + val_off, y - (iota += 10), "20 Apr 2008");
-    HPDF_Page_TextOut(page, x + val_off, y - (iota += 10),
-                      "Bachelor of Science in Computer");
-    HPDF_Page_TextOut(page, x + val_off, y - (iota += 10),
-                      "Science & Engineering");
+    HPDF_Page_TextOut(page, x + val_off, y, records->name);
+    HPDF_Page_TextOut(page, x + val_off, y - (iota += 10), id_str);
+    HPDF_Page_TextOut(page, x + val_off, y - (iota += 10), dob_str);
+
+    for (size_t i = 0; i < degree_parts->count; i++)
+    {
+        HPDF_Page_TextOut(page, x + val_off, y - (iota += 10),
+                          degree_parts->parts[i]);
+    }
+
     HPDF_Page_EndText(page);
+    str_parts_free(degree_parts);
+
+    return true;
 }
 
 static void export_to_pdf(struct semester_records *records)
@@ -683,7 +764,9 @@ static void export_to_pdf(struct semester_records *records)
     HPDF_Font font_bold = PDF_FONT_BOLD;
 
     pdf_draw_header(pdf, page);
-    pdf_draw_header_top_data(pdf, page, records->name);
+
+    if (!pdf_draw_header_top_data(pdf, page, records))
+        goto pdf_err;
 
     HPDF_SaveToFile(pdf, "transcript.pdf");
     HPDF_Free(pdf);
@@ -691,6 +774,7 @@ static void export_to_pdf(struct semester_records *records)
     return;
 
 pdf_err:
+    fprintf(stderr, "An error has occurred\n");
     HPDF_Free(pdf);
 }
 
@@ -814,7 +898,7 @@ static void semester_records_print(struct semester_records *records)
     printf("Student Name:      %s\n", records->name);
     printf("Student ID:        %" PRIu64 "\n", records->id);
     printf("Date of Birth:     %0d %.3s %04d\n", records->dob.d,
-        date_get_month(records->dob.m), records->dob.y);
+           date_get_month(records->dob.m), records->dob.y);
     printf("Degree Conferred:  %s\n", get_degree_from_id(records->id));
     printf("CGPA:         %1.2lf (%s)\n", cgpa, get_letter_grade(cgpa));
     printf("\n");

@@ -1,5 +1,5 @@
 CC ?= gcc
-CFLAGS ?= -Wall -Wextra -pedantic -Wno-unused-parameter -std=gnu99 -O2
+CFLAGS ?= -Wall -Wextra -pedantic -std=gnu99 -O2 $(CFLAGS_EXTRA)
 RM = rm -f
 
 BIN = atsgen
@@ -18,7 +18,7 @@ build-windows:
 
 run-linux: build-linux
 	./$(BIN)
-	
+
 run-darwin: build-darwin
 	./$(BIN)
 

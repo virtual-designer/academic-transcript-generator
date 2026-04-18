@@ -420,6 +420,7 @@ static void add_courses_interactive(int *added_courses, int *added_course_marks,
 static void pdf_error_handler(HPDF_STATUS code, HPDF_STATUS detail,
                               void *ignored)
 {
+    (void) ignored;
     fprintf(stderr, "libharu error: code=%" PRIu64 ", detail=%" PRIu64 "\n",
             (uint64_t) code, (uint64_t) detail);
     exit(1);
@@ -428,15 +429,6 @@ static void pdf_error_handler(HPDF_STATUS code, HPDF_STATUS detail,
 #define PDF_FONT_NORMAL HPDF_GetFont(pdf, "Times-Roman", NULL)
 #define PDF_FONT_BOLD HPDF_GetFont(pdf, "Times-Bold", NULL)
 #define PDF_FONT_BOLD_ITALIC HPDF_GetFont(pdf, "Times-BoldItalic", NULL)
-
-static void pdf_text(HPDF_Page page, HPDF_Font font, HPDF_REAL size,
-                     HPDF_REAL x, HPDF_REAL y, const char *text)
-{
-    HPDF_Page_SetFontAndSize(page, font, size);
-    HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, x, y, text);
-    HPDF_Page_EndText(page);
-}
 
 static void pdf_draw_header_title(HPDF_Doc pdf, HPDF_Page page)
 {
@@ -695,7 +687,7 @@ static bool pdf_draw_header_top_data(HPDF_Doc pdf, HPDF_Page page,
     HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, 8);
 
     iota = 0;
-    char id_str[16] = {0};
+    char id_str[64] = {0};
     snprintf(id_str, sizeof id_str, "%07" PRIu64 " %01" PRIu64 " %02" PRIu64 "",
              records->id / 1000, (records->id / 100) % 10, records->id % 100);
     char dob_str[64] = {0};
@@ -760,8 +752,6 @@ static void export_to_pdf(struct semester_records *records)
 
     HPDF_Page page = HPDF_AddPage(pdf);
     HPDF_Page_SetSize(page, HPDF_PAGE_SIZE_A4, HPDF_PAGE_PORTRAIT);
-    HPDF_Font font = PDF_FONT_NORMAL;
-    HPDF_Font font_bold = PDF_FONT_BOLD;
 
     pdf_draw_header(pdf, page);
 
@@ -900,7 +890,7 @@ static void semester_records_print(struct semester_records *records)
     printf("Date of Birth:     %0d %.3s %04d\n", records->dob.d,
            date_get_month(records->dob.m), records->dob.y);
     printf("Degree Conferred:  %s\n", get_degree_from_id(records->id));
-    printf("CGPA:         %1.2lf (%s)\n", cgpa, get_letter_grade(cgpa));
+    printf("CGPA:              %1.2lf (%s)\n", cgpa, get_letter_grade(cgpa));
     printf("\n");
 
     for (int i = 0; i < records->count; i++)

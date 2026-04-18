@@ -24,8 +24,10 @@ struct semester_record
     int course_marks[MAX_COURSES];
     int course_count;
     int semester;
+    char *semester_string;
     double wgp;
     int credits;
+    int credits_passed;
     double tgpa;
     double cgpa;
 };
@@ -36,6 +38,7 @@ struct semester_records
     struct date dob;
     uint64_t id;
     int credits;
+    int credits_passed;
     double wgp;
     struct semester_record **list;
     int count;
@@ -200,11 +203,51 @@ static const char *get_degree_from_id(uint64_t id)
 
     switch (last_2_digits)
     {
+        case 40:
         case 42:
             return "Bachelor of Science in Computer Science & Engineering";
 
         case 43:
             return "Bachelor of Science in Electrical & Electronic Engineering";
+
+        case 10:
+            return "Bachelor of Architecture";
+
+        case 11:
+            return "Bachelor of Laws";
+
+        case 15:
+            return "Bachelor of Arts in English";
+
+        case 20:
+            return "Bachelor of Science in Economics";
+
+        case 25:
+            return "Bachelor of Science in Civil & Environmental Engineering";
+
+        case 26:
+            return "Bachelor of Science in Environmental Science";
+
+        case 27:
+            return "Bachelor of Science in Environmental Management";
+
+        case 30:
+            return "Bachelor of Business Administration";
+
+        case 45:
+            return "Bachelor of Science in Electrical & Telecommunication Engineering";
+
+        case 46:
+            return "Bachelor of Pharmacy";
+
+        case 47:
+            return "Bachelor of Science in Biochemistry & Biotechnology";
+
+        case 48:
+            return "Bachelor of Science in Microbiology";
+
+        case 49:
+            return "Bachelor of Pharmacy (Professional)";
 
         default:
             return "<unknown>";
@@ -675,7 +718,7 @@ static bool pdf_draw_header_top_data(HPDF_Doc pdf, HPDF_Page page,
     HPDF_Page_TextOut(page, x + val_off, y + 16, "16 Apr 2026");
     HPDF_Page_EndText(page);
 
-    HPDF_Page_SetFontAndSize(page, PDF_FONT_BOLD, 8);
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_BOLD, 7);
 
     HPDF_Page_BeginText(page);
     HPDF_Page_TextOut(page, x, y, "Student Name:");
@@ -684,7 +727,7 @@ static bool pdf_draw_header_top_data(HPDF_Doc pdf, HPDF_Page page,
     HPDF_Page_TextOut(page, x, y - (iota += 10), "Degree Conferred:");
     HPDF_Page_EndText(page);
 
-    HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, 8);
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, 7);
 
     iota = 0;
     char id_str[64] = {0};
@@ -719,6 +762,273 @@ static bool pdf_draw_header_top_data(HPDF_Doc pdf, HPDF_Page page,
     return true;
 }
 
+static void pdf_add_record_hr(HPDF_Doc pdf, HPDF_Page page, HPDF_REAL *x_off,
+                              HPDF_REAL *y_off)
+{
+    const HPDF_REAL page_w = HPDF_Page_GetWidth(page);
+
+    HPDF_Page_SetRGBStroke(page, 0.0f, 0.0f, 0.0f);
+    HPDF_Page_SetLineWidth(page, 0.5f);
+    HPDF_Page_MoveTo(page, *x_off, *y_off);
+    HPDF_Page_LineTo(page, (*x_off) + ((page_w - 150) / 2), *y_off);
+    HPDF_Page_Stroke(page);
+
+    *y_off -= 1.0f;
+}
+
+static int pdf_add_record(HPDF_Doc pdf, HPDF_Page page,
+                          struct semester_record *record, HPDF_REAL *x_off,
+                          HPDF_REAL *y_off)
+{
+    HPDF_REAL y_check = 9.0f + 1.0f + (record->course_count * (9.0f + 1.0f)) +
+                        9.0f + 1.0f + 14.5f;
+
+    for (int i = 0; i < record->course_count; i++)
+    {
+        const int id = record->courses[i];
+        const char *course_title = course_names[id];
+        struct str_parts *title_parts = str_chunk_word(course_title, 25);
+
+        if (!title_parts)
+            return 1;
+
+        int iota = 8 * (int) title_parts->count;
+        str_parts_free(title_parts);
+        y_check += iota;
+    }
+
+    if ((*y_off) < y_check + 50)
+        return -1;
+
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_BOLD, 7);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, *x_off, *y_off, record->semester_string);
+    HPDF_Page_EndText(page);
+
+    *y_off -= 3.0f;
+    pdf_add_record_hr(pdf, page, x_off, y_off);
+    *y_off -= 6.0f;
+
+    const HPDF_REAL course_code_off = 0.0f;
+    const HPDF_REAL course_title_off = 30.0f;
+    const HPDF_REAL credits_off = 150.0f;
+    const HPDF_REAL grade_off = 170.0f;
+    const HPDF_REAL credits_completed_off = 190.0f;
+    const HPDF_REAL credits_passed_off = 210.0f;
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, *x_off + course_code_off, *y_off, "Course");
+    HPDF_Page_TextOut(page, *x_off + course_title_off, *y_off, "Course Title");
+    HPDF_Page_TextOut(page, *x_off + credits_off, *y_off, "Cr.");
+    HPDF_Page_TextOut(page, *x_off + grade_off, *y_off, "Gr.");
+    HPDF_Page_TextOut(page, *x_off + credits_completed_off, *y_off, "CC");
+    HPDF_Page_TextOut(page, *x_off + credits_passed_off, *y_off, "CP");
+    HPDF_Page_EndText(page);
+
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, 7);
+
+    for (int i = 0; i < record->course_count; i++)
+    {
+        *y_off -= 3.0f;
+        pdf_add_record_hr(pdf, page, x_off, y_off);
+        *y_off -= 6.0f;
+
+        const int id = record->courses[i];
+        const char *course_code = course_codes[id];
+        const char *course_title = course_names[id];
+        int iota = -8;
+
+        HPDF_Page_BeginText(page);
+        HPDF_Page_TextOut(page, *x_off + course_code_off, *y_off, course_code);
+
+        struct str_parts *title_parts = str_chunk_word(course_title, 25);
+
+        if (!title_parts)
+            return 1;
+
+        for (size_t j = 0; j < title_parts->count; j++)
+        {
+            HPDF_Page_TextOut(page, *x_off + course_title_off,
+                              *y_off - (iota += 8), title_parts->parts[j]);
+        }
+
+        str_parts_free(title_parts);
+
+        char credits_str[16] = {0};
+        snprintf(credits_str, sizeof credits_str, "%d", course_credits[i]);
+
+        const double gp = calc_gp(record->course_marks[id]);
+        const char *grade_str = get_letter_grade(gp);
+
+        HPDF_Page_TextOut(page, *x_off + credits_off, *y_off, credits_str);
+        HPDF_Page_TextOut(page, *x_off + grade_off, *y_off, grade_str);
+        HPDF_Page_TextOut(page, *x_off + credits_completed_off, *y_off,
+                          credits_str);
+        HPDF_Page_TextOut(page, *x_off + credits_passed_off, *y_off,
+                          gp < 1.0 ? "0" : credits_str);
+        HPDF_Page_EndText(page);
+
+        *y_off -= iota;
+    }
+
+    *y_off -= 3.0f;
+    pdf_add_record_hr(pdf, page, x_off, y_off);
+    *y_off -= 6.0f;
+
+    char semester_credits_str[64] = {0};
+    snprintf(semester_credits_str, sizeof semester_credits_str,
+             "Semester Credits: %d", record->credits);
+
+    char tgpa_str[64] = {0};
+    snprintf(tgpa_str, sizeof tgpa_str, "TGPA: %1.2lf", record->tgpa);
+
+    char cgpa_str[64] = {0};
+    snprintf(cgpa_str, sizeof cgpa_str, "CGPA: %1.2lf", record->cgpa);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, *x_off + course_code_off, *y_off,
+                      semester_credits_str);
+    HPDF_Page_TextOut(page, *x_off + course_code_off + 85, *y_off, tgpa_str);
+    HPDF_Page_TextOut(page, *x_off + course_code_off + 189, *y_off, cgpa_str);
+    HPDF_Page_EndText(page);
+
+    *y_off -= 3.0f;
+    pdf_add_record_hr(pdf, page, x_off, y_off);
+    *y_off -= 11.5f;
+
+    return 0;
+}
+
+static HPDF_Page pdf_add_page(HPDF_Doc pdf)
+{
+    HPDF_Page page = HPDF_AddPage(pdf);
+    HPDF_Page_SetSize(page, HPDF_PAGE_SIZE_A4, HPDF_PAGE_PORTRAIT);
+    return page;
+}
+
+static void pdf_add_summary(HPDF_Doc pdf, HPDF_Page page,
+                            struct semester_records *records, HPDF_REAL *x_off,
+                            HPDF_REAL *y_off)
+{
+    HPDF_Page_SetFontAndSize(page, PDF_FONT_BOLD, 7);
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, *x_off, *y_off, "Summary");
+    HPDF_Page_EndText(page);
+
+    *y_off -= 3.0f;
+    pdf_add_record_hr(pdf, page, x_off, y_off);
+    *y_off -= 9.0f;
+
+    char total_credits_str[64] = {0};
+    char total_credits_passed_str[64] = {0};
+    char total_gp_str[16] = {0};
+    char total_cgpa_str[16] = {0};
+
+    snprintf(total_credits_str, sizeof total_credits_str, "%d", records->credits);
+    snprintf(total_credits_passed_str, sizeof total_credits_passed_str, "%d", records->credits_passed);
+    snprintf(total_gp_str, sizeof total_gp_str, "%1.2lf", records->wgp);
+    snprintf(total_cgpa_str, sizeof total_cgpa_str, "%1.2lf", records->wgp / records->credits);
+
+    int iota = 8;
+
+    HPDF_Page_BeginText(page);
+
+    HPDF_Page_TextOut(page, *x_off, *y_off + (iota -= 8), "Total Credits Counted:");
+    HPDF_Page_TextOut(page, *x_off, *y_off + (iota -= 8), "Total Credits Passed:");
+    HPDF_Page_TextOut(page, *x_off, *y_off + (iota -= 8), "Total Grade Points:");
+    HPDF_Page_TextOut(page, *x_off, *y_off + (iota -= 8), "Cumulative Grade Point Average:");
+
+    iota = 8;
+
+    const HPDF_REAL val_off = 120.0f;
+
+    HPDF_Page_TextOut(page, *x_off + val_off, *y_off + (iota -= 8), total_credits_str);
+    HPDF_Page_TextOut(page, *x_off + val_off, *y_off + (iota -= 8), total_credits_passed_str);
+    HPDF_Page_TextOut(page, *x_off + val_off, *y_off + (iota -= 8), total_gp_str);
+    HPDF_Page_TextOut(page, *x_off + val_off, *y_off + (iota -= 8), total_cgpa_str);
+
+    HPDF_Page_EndText(page);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, *x_off + 22.5f, *y_off + (iota -= 30), " ***************** End of Transcript ***************** ");
+    HPDF_Page_EndText(page);
+
+    HPDF_Page_SetRGBStroke(page, 0.0f, 0.0f, 0.0f);
+
+    HPDF_Page_MoveTo(page, 50.0f, *y_off + (iota -= 60));
+    HPDF_Page_LineTo(page, 150.0f, *y_off + iota);
+    HPDF_Page_Stroke(page);
+
+    HPDF_Page_MoveTo(page, 440.0f, *y_off + iota);
+    HPDF_Page_LineTo(page, 530.0f, *y_off + iota);
+    HPDF_Page_Stroke(page);
+
+    HPDF_Page_BeginText(page);
+    HPDF_Page_TextOut(page, 60.0f, *y_off + (iota -= 8), "Controller of Examinations");
+    HPDF_Page_TextOut(page, 460.0f, *y_off + iota, "Department Chair");
+    HPDF_Page_EndText(page);
+}
+
+static bool pdf_add_records(HPDF_Doc pdf, struct semester_records *records)
+{
+    HPDF_Page page = pdf_add_page(pdf);
+
+    if (!page)
+        return false;
+
+    pdf_draw_header(pdf, page);
+
+    if (!pdf_draw_header_top_data(pdf, page, records))
+        return false;
+
+    const HPDF_REAL page_h = HPDF_Page_GetHeight(page);
+    const HPDF_REAL page_w = HPDF_Page_GetWidth(page);
+    HPDF_REAL x_off = 50;
+    HPDF_REAL y_off = page_h - 230;
+    bool first_page = true;
+
+    for (int i = 0; i < records->count; i++)
+    {
+        int ret = pdf_add_record(pdf, page, records->list[i], &x_off, &y_off);
+
+        if (ret == -1)
+        {
+            if (x_off > 50)
+            {
+                page = pdf_add_page(pdf);
+
+                if (!page)
+                    return false;
+
+                x_off = 50;
+                first_page = false;
+            }
+            else
+            {
+                x_off = (page_w - 100) / 2 + 70;
+            }
+
+            y_off = page_h - (first_page ? 230 : 50);
+            i--;
+            continue;
+        }
+    }
+
+    if (y_off < 220)
+    {
+        page = pdf_add_page(pdf);
+
+        if (!page)
+            return false;
+
+        x_off = 50;
+    }
+
+    pdf_add_summary(pdf, page, records, &x_off, &y_off);
+    return true;
+}
+
 static void export_to_pdf(struct semester_records *records)
 {
     char c;
@@ -750,12 +1060,7 @@ static void export_to_pdf(struct semester_records *records)
         return;
     }
 
-    HPDF_Page page = HPDF_AddPage(pdf);
-    HPDF_Page_SetSize(page, HPDF_PAGE_SIZE_A4, HPDF_PAGE_PORTRAIT);
-
-    pdf_draw_header(pdf, page);
-
-    if (!pdf_draw_header_top_data(pdf, page, records))
+    if (!pdf_add_records(pdf, records))
         goto pdf_err;
 
     HPDF_SaveToFile(pdf, "transcript.pdf");
@@ -789,6 +1094,14 @@ static struct semester_record *semester_record_init(int semester,
         return NULL;
 
     record->semester = semester;
+    record->semester_string = get_semester_string(semester);
+
+    if (!record->semester_string)
+    {
+        free(record);
+        return NULL;
+    }
+
     record->course_count = course_count;
 
     for (int i = 0; i < course_count; i++)
@@ -797,6 +1110,7 @@ static struct semester_record *semester_record_init(int semester,
         int credits = course_credits[id];
         double gp = calc_gp(marks[id]);
         record->credits += credits;
+        record->credits_passed += gp < 1.0 ? 0 : credits;
         record->wgp += gp * credits;
         record->courses[i] = id;
         record->course_marks[id] = marks[id];
@@ -827,6 +1141,7 @@ semester_records_add(struct semester_records *records, int semester,
     records->list[records->count++] = record;
     records->wgp += record->wgp;
     records->credits += record->credits;
+    records->credits_passed += record->credits_passed;
     record->cgpa = records->wgp / records->credits;
 
     return record;
@@ -834,6 +1149,7 @@ semester_records_add(struct semester_records *records, int semester,
 
 static void semester_record_free(struct semester_record *record)
 {
+    free(record->semester_string);
     free(record);
 }
 
@@ -856,7 +1172,26 @@ static void semester_record_print(struct semester_record *record)
     printf("CGPA:     %1.2lf (%s)\n", record->cgpa,
            get_letter_grade(record->cgpa));
     printf("\n");
-    printf("\nID\tCourse                                \tCredits  Marks  GP  "
+    printf("\nID\tCourse");
+
+    int max = 0;
+
+    for (int i = 0; i < record->course_count; i++)
+    {
+        int course_id = record->courses[i];
+        int len = (int) strlen(course_codes[course_id]) +
+                  (int) strlen(course_names[course_id]);
+
+        if (len > max)
+            max = len;
+    }
+
+    max += 3;
+
+    for (int i = 0; i < max - 4; i++)
+        printf(" ");
+
+    printf("Credits  Marks  GP  "
            "  Grade\n");
 
     free(semester_string);
@@ -867,8 +1202,8 @@ static void semester_record_print(struct semester_record *record)
         printf("[%d]\t%s - %s", course_id + 1, course_codes[course_id],
                course_names[course_id]);
 
-        for (size_t j = 0; j < 38 - 3 - strlen(course_codes[course_id]) -
-                                   strlen(course_names[course_id]);
+        for (int j = 0; j < max - 3 - (int) strlen(course_codes[course_id]) -
+                                (int) strlen(course_names[course_id]);
              j++)
             printf(" ");
 

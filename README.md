@@ -2,7 +2,7 @@
 
 This is a project for the CSE115L course at my university.
 
-## Building the project
+## Building & Running The Project
 
 ### GNU/Linux
 
@@ -64,6 +64,18 @@ If `gcc` is not in your PATH, you can run the following command as an alternativ
 
 While replacing `<absolute_path_to_mingw>` with the right path. If MinGW was installed as
 part of Code::Blocks, then it is usually `C:\Program Files\CodeBlocks\MinGW\bin`.
+
+Then finally to run the project:
+
+```batch
+atsgen.exe
+```
+
+Or if using PowerShell:
+
+```powershell
+.\atsgen.exe
+```
 
 ## Licensing
 

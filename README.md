@@ -77,7 +77,12 @@ Or if using PowerShell:
 .\atsgen.exe
 ```
 
+## Contributors [A-Z]
+
+* Ar Rakin
+* Akib Elahi
+
 ## Licensing
 
 This project is licensed under the [GNU General Public License v3.0 or later](./COPYING).
-Copyright (C) Ar Rakin 2026.
+Copyright (C) The Contributors 2026.

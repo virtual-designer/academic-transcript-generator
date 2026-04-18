@@ -79,8 +79,8 @@ Or if using PowerShell:
 
 ## Contributors [A-Z]
 
-* Ar Rakin
 * Akib Elahi
+* Ar Rakin
 
 ## Licensing
 

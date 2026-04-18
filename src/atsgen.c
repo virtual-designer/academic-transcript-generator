@@ -762,7 +762,7 @@ static bool pdf_draw_header_top_data(HPDF_Doc pdf, HPDF_Page page,
     return true;
 }
 
-static void pdf_add_record_hr(HPDF_Doc pdf, HPDF_Page page, HPDF_REAL *x_off,
+static void pdf_add_record_hr(HPDF_Page page, HPDF_REAL *x_off,
                               HPDF_REAL *y_off)
 {
     const HPDF_REAL page_w = HPDF_Page_GetWidth(page);
@@ -807,7 +807,7 @@ static int pdf_add_record(HPDF_Doc pdf, HPDF_Page page,
     HPDF_Page_EndText(page);
 
     *y_off -= 3.0f;
-    pdf_add_record_hr(pdf, page, x_off, y_off);
+    pdf_add_record_hr(page, x_off, y_off);
     *y_off -= 6.0f;
 
     const HPDF_REAL course_code_off = 0.0f;
@@ -831,7 +831,7 @@ static int pdf_add_record(HPDF_Doc pdf, HPDF_Page page,
     for (int i = 0; i < record->course_count; i++)
     {
         *y_off -= 3.0f;
-        pdf_add_record_hr(pdf, page, x_off, y_off);
+        pdf_add_record_hr(page, x_off, y_off);
         *y_off -= 6.0f;
 
         const int id = record->courses[i];
@@ -873,7 +873,7 @@ static int pdf_add_record(HPDF_Doc pdf, HPDF_Page page,
     }
 
     *y_off -= 3.0f;
-    pdf_add_record_hr(pdf, page, x_off, y_off);
+    pdf_add_record_hr(page, x_off, y_off);
     *y_off -= 6.0f;
 
     char semester_credits_str[64] = {0};
@@ -894,7 +894,7 @@ static int pdf_add_record(HPDF_Doc pdf, HPDF_Page page,
     HPDF_Page_EndText(page);
 
     *y_off -= 3.0f;
-    pdf_add_record_hr(pdf, page, x_off, y_off);
+    pdf_add_record_hr(page, x_off, y_off);
     *y_off -= 11.5f;
 
     return 0;
@@ -917,7 +917,7 @@ static void pdf_add_summary(HPDF_Doc pdf, HPDF_Page page,
     HPDF_Page_EndText(page);
 
     *y_off -= 3.0f;
-    pdf_add_record_hr(pdf, page, x_off, y_off);
+    pdf_add_record_hr(page, x_off, y_off);
     *y_off -= 9.0f;
 
     char total_credits_str[64] = {0};

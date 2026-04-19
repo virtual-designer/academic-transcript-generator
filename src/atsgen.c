@@ -197,6 +197,53 @@ static bool scanf_date(struct date *date)
     return true;
 }
 
+static const char *get_dept_from_id(uint64_t id)
+{
+    uint64_t last_2_digits = id % 100;
+
+    switch (last_2_digits)
+    {
+        case 40:
+        case 42:
+        case 43:
+        case 45:
+            return "Electrical & Computer Engineering";
+
+        case 10:
+            return "Architecture";
+
+        case 11:
+            return "Law";
+
+        case 15:
+            return "English & Modern Languages";
+
+        case 20:
+            return "Economics";
+
+        case 25:
+            return "Civil & Environmental Engineering";
+
+        case 26:
+        case 27:
+            return "Environmental Science & Management";
+
+        case 30:
+            return "Management";
+
+        case 49:
+        case 46:
+            return "Pharmaceutical Sciences";
+
+        case 47:
+        case 48:
+            return "Biochemistry & Microbiology";
+
+        default:
+            return "<unknown>";
+    }
+}
+
 static const char *get_degree_from_id(uint64_t id)
 {
     uint64_t last_2_digits = id % 100;
@@ -813,8 +860,9 @@ static int pdf_add_record(HPDF_Doc pdf, HPDF_Page page,
     const HPDF_REAL course_code_off = 0.0f;
     const HPDF_REAL course_title_off = 30.0f;
     const HPDF_REAL credits_off = 150.0f;
-    const HPDF_REAL grade_off = 170.0f;
-    const HPDF_REAL credits_completed_off = 190.0f;
+    const HPDF_REAL gp_off = 165.0f;
+    const HPDF_REAL grade_off = 180.0f;
+    const HPDF_REAL credits_completed_off = 195.0f;
     const HPDF_REAL credits_passed_off = 210.0f;
 
     HPDF_Page_BeginText(page);
@@ -911,6 +959,8 @@ static void pdf_add_summary(HPDF_Doc pdf, HPDF_Page page,
                             struct semester_records *records, HPDF_REAL *x_off,
                             HPDF_REAL *y_off)
 {
+    const HPDF_REAL page_w = HPDF_Page_GetWidth(page);
+
     HPDF_Page_SetFontAndSize(page, PDF_FONT_BOLD, 7);
     HPDF_Page_BeginText(page);
     HPDF_Page_TextOut(page, *x_off, *y_off, "Summary");
@@ -960,13 +1010,18 @@ static void pdf_add_summary(HPDF_Doc pdf, HPDF_Page page,
     HPDF_Page_LineTo(page, 150.0f, *y_off + iota);
     HPDF_Page_Stroke(page);
 
-    HPDF_Page_MoveTo(page, 440.0f, *y_off + iota);
-    HPDF_Page_LineTo(page, 530.0f, *y_off + iota);
+    char dept_chair_str[256] = "Chair, Dept. of ";
+    strcat(dept_chair_str, get_dept_from_id(records->id));
+
+    HPDF_REAL text_w = HPDF_Page_TextWidth(page, dept_chair_str);
+
+    HPDF_Page_MoveTo(page, page_w - 50.0f - text_w - 20.0f, *y_off + iota);
+    HPDF_Page_LineTo(page, page_w - 50.0f, *y_off + iota);
     HPDF_Page_Stroke(page);
 
     HPDF_Page_BeginText(page);
     HPDF_Page_TextOut(page, 60.0f, *y_off + (iota -= 8), "Controller of Examinations");
-    HPDF_Page_TextOut(page, 460.0f, *y_off + iota, "Department Chair");
+    HPDF_Page_TextOut(page, page_w - 50.0f - text_w - 10.0f, *y_off + iota, dept_chair_str);
     HPDF_Page_EndText(page);
 }
 

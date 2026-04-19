@@ -856,7 +856,7 @@ static int pdf_add_record(HPDF_Doc pdf, HPDF_Page page,
         str_parts_free(title_parts);
 
         char credits_str[16] = {0};
-        snprintf(credits_str, sizeof credits_str, "%d", course_credits[i]);
+        snprintf(credits_str, sizeof credits_str, "%d", course_credits[id]);
 
         const double gp = calc_gp(record->course_marks[id]);
         const char *grade_str = get_letter_grade(gp);

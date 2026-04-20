@@ -859,9 +859,9 @@ static int pdf_add_record(HPDF_Doc pdf, HPDF_Page page,
 
     const HPDF_REAL course_code_off = 0.0f;
     const HPDF_REAL course_title_off = 30.0f;
-    const HPDF_REAL credits_off = 150.0f;
-    const HPDF_REAL gp_off = 165.0f;
-    const HPDF_REAL grade_off = 180.0f;
+    const HPDF_REAL credits_off = 145.0f;
+    const HPDF_REAL grade_off = 160.0f;
+    const HPDF_REAL gp_off = 175.0f;
     const HPDF_REAL credits_completed_off = 195.0f;
     const HPDF_REAL credits_passed_off = 210.0f;
 
@@ -870,6 +870,7 @@ static int pdf_add_record(HPDF_Doc pdf, HPDF_Page page,
     HPDF_Page_TextOut(page, *x_off + course_title_off, *y_off, "Course Title");
     HPDF_Page_TextOut(page, *x_off + credits_off, *y_off, "Cr.");
     HPDF_Page_TextOut(page, *x_off + grade_off, *y_off, "Gr.");
+    HPDF_Page_TextOut(page, *x_off + gp_off, *y_off, "GP");
     HPDF_Page_TextOut(page, *x_off + credits_completed_off, *y_off, "CC");
     HPDF_Page_TextOut(page, *x_off + credits_passed_off, *y_off, "CP");
     HPDF_Page_EndText(page);
@@ -909,8 +910,12 @@ static int pdf_add_record(HPDF_Doc pdf, HPDF_Page page,
         const double gp = calc_gp(record->course_marks[id]);
         const char *grade_str = get_letter_grade(gp);
 
+        char gp_str[16] = {0};
+        snprintf(gp_str, sizeof gp_str, "%1.2lf", gp);
+
         HPDF_Page_TextOut(page, *x_off + credits_off, *y_off, credits_str);
         HPDF_Page_TextOut(page, *x_off + grade_off, *y_off, grade_str);
+        HPDF_Page_TextOut(page, *x_off + gp_off, *y_off, gp_str);
         HPDF_Page_TextOut(page, *x_off + credits_completed_off, *y_off,
                           credits_str);
         HPDF_Page_TextOut(page, *x_off + credits_passed_off, *y_off,
@@ -1128,7 +1133,7 @@ pdf_err:
     HPDF_Free(pdf);
 }
 
-static struct semester_records *semester_records_init()
+static struct semester_records *semester_records_init(void)
 {
     struct semester_records *records = calloc(1, sizeof(*records));
 

@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #define PROMPT ">>> "
 #define MAX_COURSES 100
@@ -570,8 +571,20 @@ static void pdf_draw_header_title(HPDF_Doc pdf, HPDF_Page page)
     const HPDF_REAL text_w_total = text_S_w + text_S_w + text_U_w + text_ix_w +
                                    text_even_w + text_niversity_w;
 
-    const HPDF_REAL title_x = (page_w - text_w_total) / 2.0;
+    const HPDF_REAL title_x_base = (page_w - text_w_total) / 2.0;
+    const HPDF_REAL title_x = title_x_base + 40;
     const HPDF_REAL title_y = page_h - 50;
+
+#ifndef LOGO_PATH
+#define LOGO_PATH "logo.png"
+#endif /* LOGO_PATH */
+
+    HPDF_Image image = HPDF_LoadPngImageFromFile(pdf, LOGO_PATH);
+
+    if (!image)
+        return;
+
+    HPDF_Page_DrawImage(page, image, title_x_base - 90, title_y - 60, 100, 100);
 
     HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, size_hi);
     HPDF_Page_SetRGBFill(page, 0.0f, 123.0f / 255.0f, 1.0f);
@@ -656,7 +669,7 @@ static void pdf_draw_header_slogan(HPDF_Doc pdf, HPDF_Page page)
         text_he_w + text_irst_w + text_rivate_w + text_niversity_w + text_n_w +
         text_angladesh_w;
 
-    const HPDF_REAL slogan_x = (page_w - text_w_total) / 2.0 - 2.0;
+    const HPDF_REAL slogan_x = (page_w - text_w_total) / 2.0f - 2.0f + 40;
     const HPDF_REAL slogan_y = page_h - 64;
 
     HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, size_hi);
@@ -726,8 +739,8 @@ static void pdf_draw_header_addr(HPDF_Doc pdf, HPDF_Page page)
         "www.sixseven.edu";
     const HPDF_REAL addr_text1_w = HPDF_Page_TextWidth(page, addr_text1);
     const HPDF_REAL addr_text2_w = HPDF_Page_TextWidth(page, addr_text2);
-    const HPDF_REAL addr_text1_x = (page_w - addr_text1_w) / 2.0;
-    const HPDF_REAL addr_text2_x = (page_w - addr_text2_w) / 2.0;
+    const HPDF_REAL addr_text1_x = (page_w - addr_text1_w) / 2.0 + 40;
+    const HPDF_REAL addr_text2_x = (page_w - addr_text2_w) / 2.0 + 40;
     const HPDF_REAL addr_text1_y = page_h - 78;
     const HPDF_REAL addr_text2_y = page_h - 89.5;
 
@@ -781,9 +794,14 @@ static bool pdf_draw_header_top_data(HPDF_Doc pdf, HPDF_Page page,
 
     HPDF_Page_SetFontAndSize(page, PDF_FONT_BOLD, 10);
 
+    time_t now = time(NULL);
+    struct tm *now_info = localtime(&now);
+    char date_str[64] = {0};
+    strftime(date_str, sizeof date_str, "%d %b %Y", now_info);
+
     HPDF_Page_BeginText(page);
     HPDF_Page_TextOut(page, x, y + 16, "Demo Transcript");
-    HPDF_Page_TextOut(page, x + val_off, y + 16, "16 Apr 2026");
+    HPDF_Page_TextOut(page, x + val_off, y + 16, date_str);
     HPDF_Page_EndText(page);
 
     HPDF_Page_SetFontAndSize(page, PDF_FONT_BOLD, 7);

@@ -120,7 +120,7 @@ static struct str_parts *str_chunk_word(const char *str, size_t limit)
         if (i - last_off + 1 >= limit || i + 1 >= len)
         {
             char *part = malloc(i - last_off + 1 + 1);
-            
+
             if (!part)
                 goto str_chunk_err;
 
@@ -304,7 +304,8 @@ static const char *get_degree_from_id(uint64_t id)
             return "Bachelor of Business Administration";
 
         case 45:
-            return "Bachelor of Science in Electrical & Telecommunication Engineering";
+            return "Bachelor of Science in Electrical & Telecommunication "
+                   "Engineering";
 
         case 46:
             return "Bachelor of Pharmacy";
@@ -549,27 +550,25 @@ static void pdf_draw_header_title(HPDF_Doc pdf, HPDF_Page page)
     const HPDF_REAL size_hi = 30;
     const HPDF_REAL size_lo = 22;
 
-    const char *text_N = "N";
     const char *text_S = "S";
     const char *text_U = "U";
-    const char *text_orth = " O R T H  ";
-    const char *text_outh = " O U T H  ";
+    const char *text_ix = " I X  ";
+    const char *text_even = " E V E N  ";
     const char *text_niversity = " N I V E R S I T Y";
 
     HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, size_hi);
 
-    const HPDF_REAL text_N_w = HPDF_Page_TextWidth(page, text_N);
     const HPDF_REAL text_S_w = HPDF_Page_TextWidth(page, text_S);
     const HPDF_REAL text_U_w = HPDF_Page_TextWidth(page, text_U);
 
     HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, size_lo);
 
-    const HPDF_REAL text_orth_w = HPDF_Page_TextWidth(page, text_orth);
-    const HPDF_REAL text_outh_w = HPDF_Page_TextWidth(page, text_outh);
+    const HPDF_REAL text_ix_w = HPDF_Page_TextWidth(page, text_ix);
+    const HPDF_REAL text_even_w = HPDF_Page_TextWidth(page, text_even);
     const HPDF_REAL text_niversity_w =
         HPDF_Page_TextWidth(page, text_niversity);
-    const HPDF_REAL text_w_total = text_N_w + text_S_w + text_U_w +
-                                   text_orth_w + text_outh_w + text_niversity_w;
+    const HPDF_REAL text_w_total = text_S_w + text_S_w + text_U_w + text_ix_w +
+                                   text_even_w + text_niversity_w;
 
     const HPDF_REAL title_x = (page_w - text_w_total) / 2.0;
     const HPDF_REAL title_y = page_h - 50;
@@ -578,34 +577,34 @@ static void pdf_draw_header_title(HPDF_Doc pdf, HPDF_Page page)
     HPDF_Page_SetRGBFill(page, 0.0f, 123.0f / 255.0f, 1.0f);
 
     HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, title_x, title_y, text_N);
+    HPDF_Page_TextOut(page, title_x, title_y, text_S);
     HPDF_Page_EndText(page);
 
     HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, title_x + text_N_w + text_orth_w, title_y, text_S);
+    HPDF_Page_TextOut(page, title_x + text_S_w + text_ix_w, title_y, text_S);
     HPDF_Page_EndText(page);
 
     HPDF_Page_BeginText(page);
     HPDF_Page_TextOut(page,
-                      title_x + text_N_w + text_orth_w + text_S_w + text_outh_w,
+                      title_x + text_S_w + text_ix_w + text_S_w + text_even_w,
                       title_y, text_U);
     HPDF_Page_EndText(page);
 
     HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, size_lo);
 
     HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, title_x + text_N_w, title_y, text_orth);
+    HPDF_Page_TextOut(page, title_x + text_S_w, title_y, text_ix);
     HPDF_Page_EndText(page);
 
     HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, title_x + text_N_w + text_orth_w + text_S_w,
-                      title_y, text_outh);
+    HPDF_Page_TextOut(page, title_x + text_S_w + text_ix_w + text_S_w, title_y,
+                      text_even);
     HPDF_Page_EndText(page);
 
     HPDF_Page_BeginText(page);
     HPDF_Page_TextOut(page,
-                      title_x + text_N_w + text_orth_w + text_S_w +
-                          text_outh_w + text_U_w,
+                      title_x + text_S_w + text_ix_w + text_S_w + text_even_w +
+                          text_U_w,
                       title_y, text_niversity);
     HPDF_Page_EndText(page);
 
@@ -720,11 +719,11 @@ static void pdf_draw_header_addr(HPDF_Doc pdf, HPDF_Page page)
 
     const HPDF_REAL page_h = HPDF_Page_GetHeight(page);
     const HPDF_REAL page_w = HPDF_Page_GetWidth(page);
-    const char *addr_text1 = "Plot # 15, Block # B, Bashundhara, Dhaka-1229, "
-                             "Bangladesh, Phone 880 (2) 8852000,";
+    const char *addr_text1 = "Plot # 69, Block # Z, Bashundhara, Dhaka-1229, "
+                             "Bangladesh, Phone 880 (2) 12345678,";
     const char *addr_text2 =
-        "Fax: 880 (2) 8852016, Email: controller@northsouth.edu, Website: "
-        "www.northsouth.edu";
+        "Fax: 880 (2) 34989367, Email: controller@sixseven.edu, Website: "
+        "www.sixseven.edu";
     const HPDF_REAL addr_text1_w = HPDF_Page_TextWidth(page, addr_text1);
     const HPDF_REAL addr_text2_w = HPDF_Page_TextWidth(page, addr_text2);
     const HPDF_REAL addr_text1_x = (page_w - addr_text1_w) / 2.0;
@@ -1002,33 +1001,46 @@ static void pdf_add_summary(HPDF_Doc pdf, HPDF_Page page,
     char total_gp_str[16] = {0};
     char total_cgpa_str[16] = {0};
 
-    snprintf(total_credits_str, sizeof total_credits_str, "%d", records->credits);
-    snprintf(total_credits_passed_str, sizeof total_credits_passed_str, "%d", records->credits_passed);
+    snprintf(total_credits_str, sizeof total_credits_str, "%d",
+             records->credits);
+    snprintf(total_credits_passed_str, sizeof total_credits_passed_str, "%d",
+             records->credits_passed);
     snprintf(total_gp_str, sizeof total_gp_str, "%1.2lf", records->wgp);
-    snprintf(total_cgpa_str, sizeof total_cgpa_str, "%1.2lf", records->wgp / records->credits);
+    snprintf(total_cgpa_str, sizeof total_cgpa_str, "%1.2lf",
+             records->wgp / records->credits);
 
     int iota = 8;
 
     HPDF_Page_BeginText(page);
 
-    HPDF_Page_TextOut(page, *x_off, *y_off + (iota -= 8), "Total Credits Counted:");
-    HPDF_Page_TextOut(page, *x_off, *y_off + (iota -= 8), "Total Credits Passed:");
-    HPDF_Page_TextOut(page, *x_off, *y_off + (iota -= 8), "Total Grade Points:");
-    HPDF_Page_TextOut(page, *x_off, *y_off + (iota -= 8), "Cumulative Grade Point Average:");
+    HPDF_Page_TextOut(page, *x_off, *y_off + (iota -= 8),
+                      "Total Credits Counted:");
+    HPDF_Page_TextOut(page, *x_off, *y_off + (iota -= 8),
+                      "Total Credits Passed:");
+    HPDF_Page_TextOut(page, *x_off, *y_off + (iota -= 8),
+                      "Total Grade Points:");
+    HPDF_Page_TextOut(page, *x_off, *y_off + (iota -= 8),
+                      "Cumulative Grade Point Average:");
 
     iota = 8;
 
     const HPDF_REAL val_off = 120.0f;
 
-    HPDF_Page_TextOut(page, *x_off + val_off, *y_off + (iota -= 8), total_credits_str);
-    HPDF_Page_TextOut(page, *x_off + val_off, *y_off + (iota -= 8), total_credits_passed_str);
-    HPDF_Page_TextOut(page, *x_off + val_off, *y_off + (iota -= 8), total_gp_str);
-    HPDF_Page_TextOut(page, *x_off + val_off, *y_off + (iota -= 8), total_cgpa_str);
+    HPDF_Page_TextOut(page, *x_off + val_off, *y_off + (iota -= 8),
+                      total_credits_str);
+    HPDF_Page_TextOut(page, *x_off + val_off, *y_off + (iota -= 8),
+                      total_credits_passed_str);
+    HPDF_Page_TextOut(page, *x_off + val_off, *y_off + (iota -= 8),
+                      total_gp_str);
+    HPDF_Page_TextOut(page, *x_off + val_off, *y_off + (iota -= 8),
+                      total_cgpa_str);
 
     HPDF_Page_EndText(page);
 
     HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, *x_off + 22.5f, *y_off + (iota -= 30), " ***************** End of Transcript ***************** ");
+    HPDF_Page_TextOut(
+        page, *x_off + 22.5f, *y_off + (iota -= 30),
+        " ***************** End of Transcript ***************** ");
     HPDF_Page_EndText(page);
 
     HPDF_Page_SetRGBStroke(page, 0.0f, 0.0f, 0.0f);
@@ -1047,8 +1059,10 @@ static void pdf_add_summary(HPDF_Doc pdf, HPDF_Page page,
     HPDF_Page_Stroke(page);
 
     HPDF_Page_BeginText(page);
-    HPDF_Page_TextOut(page, 60.0f, *y_off + (iota -= 8), "Controller of Examinations");
-    HPDF_Page_TextOut(page, page_w - 50.0f - text_w - 10.0f, *y_off + iota, dept_chair_str);
+    HPDF_Page_TextOut(page, 60.0f, *y_off + (iota -= 8),
+                      "Controller of Examinations");
+    HPDF_Page_TextOut(page, page_w - 50.0f - text_w - 10.0f, *y_off + iota,
+                      dept_chair_str);
     HPDF_Page_EndText(page);
 }
 

@@ -119,11 +119,14 @@ static struct str_parts *str_chunk_word(const char *str, size_t limit)
 
         if (i - last_off + 1 >= limit || i + 1 >= len)
         {
-            char *part = strndup(str + last_off, i - last_off + 1);
-            last_off = i + 1;
-
+            char *part = malloc(i - last_off + 1 + 1);
+            
             if (!part)
                 goto str_chunk_err;
+
+            memcpy(part, str + last_off, i - last_off + 1);
+            part[i - last_off + 1] = '\0';
+            last_off = i + 1;
 
             char **new_parts = realloc(parts, sizeof(char *) * (count + 1));
 

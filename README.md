@@ -56,15 +56,6 @@ Then open a terminal in the project directory and run:
 gcc -Isrc -Iinclude -L. src\atsgen.c -lhpdf -o atsgen.exe
 ```
 
-If `gcc` is not in your PATH, you can run the following command as an alternative:
-
-```bash
-"<absolute_path_to_mingw>\gcc" -Isrc -Iinclude -L. src\atsgen.c -lhpdf -o atsgen.exe
-```
-
-While replacing `<absolute_path_to_mingw>` with the right path. If MinGW was installed as
-part of Code::Blocks, then it is usually `C:\Program Files\CodeBlocks\MinGW\bin`.
-
 Then finally to run the project:
 
 ```batch
@@ -76,6 +67,21 @@ Or if using PowerShell:
 ```powershell
 .\atsgen.exe
 ```
+
+If `gcc` is not in your PATH, either add it to your PATH, or follow the workaround below if using Code::Blocks with MinGW.
+
+If MinGW was installed as part of Code::Blocks, then binaries usually found at `C:\Program Files\CodeBlocks\MinGW\bin`.
+The issue is, if that path isn't in your PATH environment variable, the compiler will fail silently without any output file.
+
+To fix it, you have to first open the `src/atsgen.c` file in Code::Blocks, and then edit the compiler flags: Settings > Compiler, then edit any checked compiler option set, and add:
+
+* Compiler flags: `-I<full_project_path>\src -I<full_project_path>\include`
+* Linker flags: `-L<full_project_path> -L<full_project_path>\src -lhpdf`
+
+While replacing `<full_project_path>` with the actual absolute path to the project.
+Then copy `logo.png` and `libhpdf.dll` from the project root to `src`.
+
+Finally, to build: Build > Build & Run. This should build and run the project.
 
 ## Contributors [A-Z]
 

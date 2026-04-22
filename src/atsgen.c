@@ -752,8 +752,8 @@ static void pdf_draw_header_addr(HPDF_Doc pdf, HPDF_Page page)
         "www.sixseven.edu";
     const HPDF_REAL addr_text1_w = HPDF_Page_TextWidth(page, addr_text1);
     const HPDF_REAL addr_text2_w = HPDF_Page_TextWidth(page, addr_text2);
-    const HPDF_REAL addr_text1_x = (page_w - addr_text1_w) / 2.0;
-    const HPDF_REAL addr_text2_x = (page_w - addr_text2_w) / 2.0;
+    HPDF_REAL addr_text1_x = (page_w - addr_text1_w) / 2.0;
+    HPDF_REAL addr_text2_x = (page_w - addr_text2_w) / 2.0;
 
 #ifndef _WIN32
     addr_text1_x += 40.0f;

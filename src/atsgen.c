@@ -26,8 +26,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
+#include <unistd.h>
 
 #define PROMPT ">>> "
 #define MAX_COURSES 100
@@ -571,29 +571,8 @@ static void pdf_draw_header_title(HPDF_Doc pdf, HPDF_Page page)
     const HPDF_REAL text_w_total = text_S_w + text_S_w + text_U_w + text_ix_w +
                                    text_even_w + text_niversity_w;
 
-    const HPDF_REAL title_x_base = (page_w - text_w_total) / 2.0;
-
-#ifdef _WIN32
-    const HPDF_REAL title_x = title_x_base;
-#else
-    const HPDF_REAL title_x = title_x_base + 40;
-#endif /* _WIN32 */
-
+    const HPDF_REAL title_x = (page_w - text_w_total) / 2.0;
     const HPDF_REAL title_y = page_h - 50;
-
-#ifndef LOGO_PATH
-#define LOGO_PATH "logo.png"
-#endif /* LOGO_PATH */
-
-#ifndef _WIN32
-    HPDF_Image image = HPDF_LoadPngImageFromFile(pdf, LOGO_PATH);
-
-    if (!image)
-        return;
-
-    HPDF_Page_DrawImage(page, image, title_x_base - 90, title_y - 60, 100, 100);
-
-#endif /* _WIN32 */
 
     HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, size_hi);
     HPDF_Page_SetRGBFill(page, 0.0f, 123.0f / 255.0f, 1.0f);
@@ -679,10 +658,6 @@ static void pdf_draw_header_slogan(HPDF_Doc pdf, HPDF_Page page)
 
     HPDF_REAL slogan_x = (page_w - text_w_total) / 2.0f - 2.0f;
 
-#ifndef _WIN32
-    slogan_x += 40.0f;
-#endif /* _WIN32 */
-
     const HPDF_REAL slogan_y = page_h - 64;
 
     HPDF_Page_SetFontAndSize(page, PDF_FONT_NORMAL, size_hi);
@@ -752,13 +727,8 @@ static void pdf_draw_header_addr(HPDF_Doc pdf, HPDF_Page page)
         "www.sixseven.edu";
     const HPDF_REAL addr_text1_w = HPDF_Page_TextWidth(page, addr_text1);
     const HPDF_REAL addr_text2_w = HPDF_Page_TextWidth(page, addr_text2);
-    HPDF_REAL addr_text1_x = (page_w - addr_text1_w) / 2.0;
-    HPDF_REAL addr_text2_x = (page_w - addr_text2_w) / 2.0;
-
-#ifndef _WIN32
-    addr_text1_x += 40.0f;
-    addr_text2_x += 40.0f;
-#endif /* _WIN32 */
+    HPDF_REAL addr_text1_x = (page_w - addr_text1_w) / 2.0f;
+    HPDF_REAL addr_text2_x = (page_w - addr_text2_w) / 2.0f;
 
     const HPDF_REAL addr_text1_y = page_h - 78;
     const HPDF_REAL addr_text2_y = page_h - 89.5;

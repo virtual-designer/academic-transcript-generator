@@ -12,7 +12,7 @@ This is a project for the CSE115L course at my university.
 2. GNU Make
 3. libharu (for PDF generation)
 
-If libharu is missing, it can be installed in various ways depending on the distribution. 
+If libharu is missing, it can be installed in various ways depending on the distribution.
 I will assume the user knows how to do that.
 
 To build and run the project, run:
@@ -49,7 +49,7 @@ make run-darwin
 
 ### Windows
 
-First ensure that you have MinGW/gcc installed and available in your PATH. 
+First ensure that you have MinGW/gcc installed and available in your PATH.
 Then open a terminal in the project directory and run:
 
 ```bash
@@ -79,7 +79,7 @@ To fix it, you have to first open the `src/atsgen.c` file in Code::Blocks, and t
 * Linker flags: `-L<full_project_path> -L<full_project_path>\src -lhpdf`
 
 While replacing `<full_project_path>` with the actual absolute path to the project.
-Then copy `logo.png` and `libhpdf.dll` from the project root to `src`.
+Then copy  `libhpdf.dll` from the project root to `src`.
 
 Finally, to build: Build > Build & Run. This should build and run the project.
 

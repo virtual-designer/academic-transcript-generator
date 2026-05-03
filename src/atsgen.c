@@ -30,6 +30,7 @@
 #include <unistd.h>
 
 #define PROMPT ">>> "
+#define ERRMSG "Error: "
 #define MAX_COURSES 100
 #define COURSE_NAME_MAX 128
 
@@ -424,7 +425,7 @@ static void set_semester(int *semester)
 
     if (!semester_string)
     {
-        fprintf(stderr, "Invalid semester\n");
+        fprintf(stderr, ERRMSG "Invalid semester\n");
         exit(1);
     }
 
@@ -449,7 +450,7 @@ static void set_id(uint64_t *id)
 
     if (*id < 1000000000ULL || *id > 9999999999ULL)
     {
-        fprintf(stderr, "Invalid ID entered\n");
+        fprintf(stderr, ERRMSG "Invalid ID entered\n");
     }
 }
 
@@ -459,7 +460,7 @@ static void set_dob(struct date *dob)
 
     if (!scanf_date(dob))
     {
-        fprintf(stderr, "Invalid date entered\n");
+        fprintf(stderr, ERRMSG "Invalid date entered\n");
     }
 }
 
@@ -535,7 +536,7 @@ static void pdf_error_handler(HPDF_STATUS code, HPDF_STATUS detail,
                               void *ignored)
 {
     (void) ignored;
-    fprintf(stderr, "libharu error: code=%" PRIu64 ", detail=%" PRIu64 "\n",
+    fprintf(stderr, ERRMSG "libharu error: code=%" PRIu64 ", detail=%" PRIu64 "\n",
             (uint64_t) code, (uint64_t) detail);
     exit(1);
 }
@@ -1159,7 +1160,7 @@ static void export_to_pdf(struct semester_records *records)
 
     if (!pdf)
     {
-        fprintf(stderr, "Error: cannot initialize HPDF\n");
+        fprintf(stderr, ERRMSG "cannot initialize HPDF\n");
         return;
     }
 
@@ -1172,7 +1173,7 @@ static void export_to_pdf(struct semester_records *records)
     return;
 
 pdf_err:
-    fprintf(stderr, "An error has occurred\n");
+    fprintf(stderr, ERRMSG "An unknown PDF error has occurred\n");
     HPDF_Free(pdf);
 }
 
@@ -1343,7 +1344,7 @@ int main(void)
 
     if (!records)
     {
-        fprintf(stderr, "Memory allocation failed\n");
+        fprintf(stderr, ERRMSG "Memory allocation failed\n");
         exit(1);
     }
 

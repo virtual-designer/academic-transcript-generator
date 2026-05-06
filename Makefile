@@ -1,5 +1,5 @@
-CC ?= gcc
-CFLAGS ?= -Wall -Wextra -pedantic -std=gnu99 -O2 $(CFLAGS_EXTRA)
+CC = gcc
+CFLAGS = -Wall -Wextra -pedantic -std=gnu99 -O2 $(CFLAGS_EXTRA)
 RM = rm -f
 
 BIN = atsgen

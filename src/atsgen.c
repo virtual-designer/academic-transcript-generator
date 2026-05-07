@@ -212,7 +212,8 @@ void print_transcript(char *name, struct semester_record_list *record_list)
         double term_wgp = 0;
         double term_credits = 0;
 
-        if (record_list->list[i].course_count < 1) {
+        if (record_list->list[i].course_count < 1)
+        {
             continue;
         }
 

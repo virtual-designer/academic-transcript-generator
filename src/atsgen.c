@@ -532,6 +532,167 @@ static void add_courses_interactive(int *added_courses, int *added_course_marks,
     }
 }
 
+static struct semester_records *semester_records_init(void)
+{
+    struct semester_records *records = calloc(1, sizeof(*records));
+
+    if (!records)
+        return NULL;
+
+    return records;
+}
+
+static struct semester_record *semester_record_init(int semester,
+                                                    const int *courses,
+                                                    const int *marks,
+                                                    int course_count)
+{
+    struct semester_record *record = calloc(1, sizeof(*record));
+
+    if (!record)
+        return NULL;
+
+    record->semester = semester;
+    record->semester_string = get_semester_string(semester);
+
+    if (!record->semester_string)
+    {
+        free(record);
+        return NULL;
+    }
+
+    record->course_count = course_count;
+
+    for (int i = 0; i < course_count; i++)
+    {
+        int id = courses[i];
+        int credits = course_credits[id];
+        double gp = calc_gp(marks[id]);
+        record->credits += credits;
+        record->credits_passed += gp < 1.0 ? 0 : credits;
+        record->wgp += gp * credits;
+        record->courses[i] = id;
+        record->course_marks[id] = marks[id];
+    }
+
+    record->tgpa = record->wgp / record->credits;
+    return record;
+}
+
+static struct semester_record *
+semester_records_add(struct semester_records *records, int semester,
+                     const int *courses, const int *marks, int course_count)
+{
+    struct semester_record **list =
+        realloc(records->list, sizeof(*list) * (records->count + 1));
+
+    if (!list)
+        return NULL;
+
+    records->list = list;
+
+    struct semester_record *record =
+        semester_record_init(semester, courses, marks, course_count);
+
+    if (!record)
+        return NULL;
+
+    records->list[records->count++] = record;
+    records->wgp += record->wgp;
+    records->credits += record->credits;
+    records->credits_passed += record->credits_passed;
+    record->cgpa = records->wgp / records->credits;
+
+    return record;
+}
+
+static void semester_record_free(struct semester_record *record)
+{
+    free(record->semester_string);
+    free(record);
+}
+
+static void semester_records_free(struct semester_records *records)
+{
+    for (int i = 0; i < records->count; i++)
+        semester_record_free(records->list[i]);
+
+    free(records->list);
+    free(records);
+}
+
+static void semester_record_print(struct semester_record *record)
+{
+    char *semester_string = get_semester_string(record->semester);
+
+    printf("Semester: %s\n", semester_string);
+    printf("TGPA:     %1.2lf (%s)\n", record->tgpa,
+           get_letter_grade(record->tgpa));
+    printf("CGPA:     %1.2lf (%s)\n", record->cgpa,
+           get_letter_grade(record->cgpa));
+    printf("\n");
+    printf("\nID\tCourse");
+
+    int max = 0;
+
+    for (int i = 0; i < record->course_count; i++)
+    {
+        int course_id = record->courses[i];
+        int len = (int) strlen(course_codes[course_id]) +
+                  (int) strlen(course_names[course_id]);
+
+        if (len > max)
+            max = len;
+    }
+
+    max += 3;
+
+    for (int i = 0; i < max - 4; i++)
+        printf(" ");
+
+    printf("Credits  Marks  GP  "
+           "  Grade\n");
+
+    free(semester_string);
+
+    for (int i = 0; i < record->course_count; i++)
+    {
+        int course_id = record->courses[i];
+        printf("[%d]\t%s - %s", course_id + 1, course_codes[course_id],
+               course_names[course_id]);
+
+        for (int j = 0; j < max - 3 - (int) strlen(course_codes[course_id]) -
+                                (int) strlen(course_names[course_id]);
+             j++)
+            printf(" ");
+
+        double gp = calc_gp(record->course_marks[course_id]);
+
+        printf("  %d        %-3d    %1.2lf  %s\n", course_credits[course_id],
+               record->course_marks[course_id], gp, get_letter_grade(gp));
+    }
+
+    printf("\n");
+}
+
+static void semester_records_print(struct semester_records *records)
+{
+    double cgpa = records->wgp / records->credits;
+
+    printf("Student Name:      %s\n", records->name);
+    printf("Student ID:        %" PRIu64 "\n", records->id);
+    printf("Date of Birth:     %0d %.3s %04d\n", records->dob.d,
+           date_get_month(records->dob.m), records->dob.y);
+    printf("Degree Conferred:  %s\n", get_degree_from_id(records->id));
+    printf("CGPA:              %1.2lf (%s)\n", cgpa, get_letter_grade(cgpa));
+    printf("\n");
+
+    for (int i = 0; i < records->count; i++)
+        semester_record_print(records->list[i]);
+}
+
+/* PDF functions. */
+
 static void pdf_error_handler(HPDF_STATUS code, HPDF_STATUS detail,
                               void *ignored)
 {
@@ -1176,165 +1337,6 @@ static void export_to_pdf(struct semester_records *records)
 pdf_err:
     fprintf(stderr, ERRMSG "An unknown PDF error has occurred\n");
     HPDF_Free(pdf);
-}
-
-static struct semester_records *semester_records_init(void)
-{
-    struct semester_records *records = calloc(1, sizeof(*records));
-
-    if (!records)
-        return NULL;
-
-    return records;
-}
-
-static struct semester_record *semester_record_init(int semester,
-                                                    const int *courses,
-                                                    const int *marks,
-                                                    int course_count)
-{
-    struct semester_record *record = calloc(1, sizeof(*record));
-
-    if (!record)
-        return NULL;
-
-    record->semester = semester;
-    record->semester_string = get_semester_string(semester);
-
-    if (!record->semester_string)
-    {
-        free(record);
-        return NULL;
-    }
-
-    record->course_count = course_count;
-
-    for (int i = 0; i < course_count; i++)
-    {
-        int id = courses[i];
-        int credits = course_credits[id];
-        double gp = calc_gp(marks[id]);
-        record->credits += credits;
-        record->credits_passed += gp < 1.0 ? 0 : credits;
-        record->wgp += gp * credits;
-        record->courses[i] = id;
-        record->course_marks[id] = marks[id];
-    }
-
-    record->tgpa = record->wgp / record->credits;
-    return record;
-}
-
-static struct semester_record *
-semester_records_add(struct semester_records *records, int semester,
-                     const int *courses, const int *marks, int course_count)
-{
-    struct semester_record **list =
-        realloc(records->list, sizeof(*list) * (records->count + 1));
-
-    if (!list)
-        return NULL;
-
-    records->list = list;
-
-    struct semester_record *record =
-        semester_record_init(semester, courses, marks, course_count);
-
-    if (!record)
-        return NULL;
-
-    records->list[records->count++] = record;
-    records->wgp += record->wgp;
-    records->credits += record->credits;
-    records->credits_passed += record->credits_passed;
-    record->cgpa = records->wgp / records->credits;
-
-    return record;
-}
-
-static void semester_record_free(struct semester_record *record)
-{
-    free(record->semester_string);
-    free(record);
-}
-
-static void semester_records_free(struct semester_records *records)
-{
-    for (int i = 0; i < records->count; i++)
-        semester_record_free(records->list[i]);
-
-    free(records->list);
-    free(records);
-}
-
-static void semester_record_print(struct semester_record *record)
-{
-    char *semester_string = get_semester_string(record->semester);
-
-    printf("Semester: %s\n", semester_string);
-    printf("TGPA:     %1.2lf (%s)\n", record->tgpa,
-           get_letter_grade(record->tgpa));
-    printf("CGPA:     %1.2lf (%s)\n", record->cgpa,
-           get_letter_grade(record->cgpa));
-    printf("\n");
-    printf("\nID\tCourse");
-
-    int max = 0;
-
-    for (int i = 0; i < record->course_count; i++)
-    {
-        int course_id = record->courses[i];
-        int len = (int) strlen(course_codes[course_id]) +
-                  (int) strlen(course_names[course_id]);
-
-        if (len > max)
-            max = len;
-    }
-
-    max += 3;
-
-    for (int i = 0; i < max - 4; i++)
-        printf(" ");
-
-    printf("Credits  Marks  GP  "
-           "  Grade\n");
-
-    free(semester_string);
-
-    for (int i = 0; i < record->course_count; i++)
-    {
-        int course_id = record->courses[i];
-        printf("[%d]\t%s - %s", course_id + 1, course_codes[course_id],
-               course_names[course_id]);
-
-        for (int j = 0; j < max - 3 - (int) strlen(course_codes[course_id]) -
-                                (int) strlen(course_names[course_id]);
-             j++)
-            printf(" ");
-
-        double gp = calc_gp(record->course_marks[course_id]);
-
-        printf("  %d        %-3d    %1.2lf  %s\n", course_credits[course_id],
-               record->course_marks[course_id], gp, get_letter_grade(gp));
-    }
-
-    printf("\n");
-}
-
-static void semester_records_print(struct semester_records *records)
-{
-    double cgpa = records->wgp / records->credits;
-
-    printf("Student Name:      %s\n", records->name);
-    printf("Student ID:        %" PRIu64 "\n", records->id);
-    printf("Date of Birth:     %0d %.3s %04d\n", records->dob.d,
-           date_get_month(records->dob.m), records->dob.y);
-    printf("Degree Conferred:  %s\n", get_degree_from_id(records->id));
-    printf("CGPA:              %1.2lf (%s)\n", cgpa, get_letter_grade(cgpa));
-    printf("\n");
-
-    for (int i = 0; i < records->count; i++)
-        semester_record_print(records->list[i]);
 }
 
 int main(void)

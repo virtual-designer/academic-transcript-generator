@@ -110,7 +110,7 @@ void set_name(char *name)
 
     int len = strlen(name);
 
-    if (name[len - 1] == '\n')
+    if (len > 0 && name[len - 1] == '\n')
         name[len - 1] = '\0';
 }
 
@@ -212,9 +212,32 @@ void print_transcript(char *name, struct semester_record_list *record_list)
         double term_wgp = 0;
         double term_credits = 0;
 
+        if (record_list->list[i].course_count < 1) {
+            continue;
+        }
+
         printf("Semester:       %d\n", record_list->list[i].semester);
         printf("\n");
-        printf("ID\tCourse                                \tCredits  Marks  GP    Grade\n");
+        printf("ID\tCourse");
+
+        int max = 0;
+
+        for (int j = 0; j < record_list->list[i].course_count; j++)
+        {
+            int course_id = record_list->list[i].course_ids[j];
+            int len = (int) strlen(course_codes[course_id]) + (int) strlen(course_names[course_id]);
+
+            if (len > max)
+                max = len;
+        }
+
+        max += 3;
+
+        for (int i = 0; i < max - 4; i++)
+            printf(" ");
+
+        printf("Credits  Marks  GP  "
+               "  Grade\n");
 
         for (int j = 0; j < record_list->list[i].course_count; j++)
         {
@@ -222,7 +245,7 @@ void print_transcript(char *name, struct semester_record_list *record_list)
 
             printf("[%d]\t%s - %s", course_id + 1, course_codes[course_id], course_names[course_id]);
 
-            for (size_t j = 0; j < 38 - 3 - strlen(course_codes[course_id]) - strlen(course_names[course_id]); j++)
+            for (int k = 0; k < max - 3 - (int) strlen(course_codes[course_id]) - (int) strlen(course_names[course_id]); k++)
                 printf(" ");
 
             double gp = calc_gp(record_list->list[i].course_marks[course_id]);
@@ -235,15 +258,31 @@ void print_transcript(char *name, struct semester_record_list *record_list)
             term_wgp += gp * course_credits[course_id];
         }
 
-        double tgpa = term_wgp / term_credits;
-        double local_cgpa = wgp / credits;
+        double tgpa = 0.0;
+        double local_cgpa = 0.0;
+
+        if (term_credits > 0)
+        {
+            tgpa = term_wgp / term_credits;
+        }
+
+        if (credits > 0)
+        {
+            local_cgpa = wgp / credits;
+        }
 
         printf("\nTGPA:           %1.2lf (%s)\n", tgpa, get_letter_grade(tgpa));
         printf("CGPA:           %1.2lf (%s)\n", local_cgpa, get_letter_grade(local_cgpa));
         print_divider();
     }
 
-    double cgpa = wgp / credits;
+    double cgpa = 0.0;
+
+    if (credits > 0)
+    {
+        cgpa = wgp / credits;
+    }
+
     printf("Final CGPA:     %1.2lf (%s)\n", cgpa, get_letter_grade(cgpa));
     print_divider();
     printf("**** End of transcript ****\n");

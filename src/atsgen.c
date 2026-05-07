@@ -536,7 +536,8 @@ static void pdf_error_handler(HPDF_STATUS code, HPDF_STATUS detail,
                               void *ignored)
 {
     (void) ignored;
-    fprintf(stderr, ERRMSG "libharu error: code=%" PRIu64 ", detail=%" PRIu64 "\n",
+    fprintf(stderr,
+            ERRMSG "libharu error: code=%" PRIu64 ", detail=%" PRIu64 "\n",
             (uint64_t) code, (uint64_t) detail);
     exit(1);
 }

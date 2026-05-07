@@ -1,6 +1,5 @@
 *.o
 *.obj
 *.exe
-*.pdf
 /tmp
 /atsgen

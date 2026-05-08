@@ -479,7 +479,7 @@ static void add_courses_interactive(int *added_courses, int *added_course_marks,
 {
     printf("Courses are listed below,");
     printf(" please enter the appropriate course IDs");
-    printf(" indicated inside square brackets '[]').\n");
+    printf(" indicated inside square brackets ('[]').\n");
     printf("**Enter 0 to stop adding courses and finalize the semester "
            "record.**\n\n");
 

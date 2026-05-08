@@ -129,7 +129,7 @@ void add_courses_interactive(struct semester_record records[], int record_count)
 {
     printf("Courses are listed below,");
     printf(" please enter the appropriate course IDs");
-    printf(" indicated inside square brackets '[]').\n");
+    printf(" indicated inside square brackets ('[]').\n");
     printf("**Enter 0 to stop adding courses and finalize the semester data.**\n\n");
 
     print_course_list();
